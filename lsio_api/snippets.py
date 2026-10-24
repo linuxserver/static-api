@@ -20,7 +20,8 @@ class _Optional(Protocol):
 
 def _quote(s: str) -> str:
     """Quote a YAML scalar only when it needs it."""
-    return json.dumps(s) if s == "" or re.search(r"""[\s:#{}\[\],&*?|<>=!%@`'"]""", s) else s
+    # ensure_ascii=False, as JSON.stringify in the site, so "café" isn't written as "caf\u00e9".
+    return json.dumps(s, ensure_ascii=False) if s == "" or re.search(r"""[\s:#{}\[\],&*?|<>=!%@`'"]""", s) else s
 
 
 def _ports(c: Config) -> list[Port]:

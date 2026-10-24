@@ -59,7 +59,7 @@ class Snapshot(BaseModel):
 
 
 def _read(path: Path) -> object:
-    return json.loads(path.read_text()) if path.exists() else {}
+    return json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
 
 
 def load_snapshot(directory: Path) -> Snapshot:
@@ -74,4 +74,4 @@ def save_snapshot(directory: Path, snapshot: Snapshot) -> None:
     for key, value in snapshot.model_dump().items():
         if key == "status":
             value = {name: s.model_dump(exclude_none=True) for name, s in snapshot.status.items()}
-        (directory / f"{key}.json").write_text(json.dumps(value, indent=1, ensure_ascii=False) + "\n")
+        (directory / f"{key}.json").write_text(json.dumps(value, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")

@@ -6,17 +6,22 @@ The OpenAPI spec is generated from these, so descriptions here are the API's doc
 
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 V1_CHANGELOG_ENTRIES = 3
 """How many changelog entries the v1 list endpoints include, as the original does."""
 CHANGELOG_LIMIT = 100
 """How many entries /api/v1/changelog.json lists."""
 
-IsoDate = Annotated[str, Field(description="YYYY-MM-DD")]
+# The patterns are checked when a response is built, so a malformed value fails the build (or skips the
+# image) rather than being published, and they are in the spec for clients.
+IsoDate = Annotated[str, Field(description="YYYY-MM-DD", pattern=r"^\d{4}-\d{2}-\d{2}$")]
+_TIMESTAMP = r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\+00:00$"
 LastUpdated = Annotated[
-    str, Field(description="When the data was last refreshed, UTC, as `YYYY-MM-DD HH:MM:SS+00:00`.")
+    str,
+    Field(description="When the data was last refreshed, UTC, as `YYYY-MM-DD HH:MM:SS+00:00`.", pattern=_TIMESTAMP),
 ]
+Count = Annotated[int, Field(ge=0)]
 
 # ---------------------------------------------------------------------------------------------------
 # v1, as the original API serves them
@@ -127,15 +132,15 @@ class Image(BaseModel):
     project_logo: str | None = Field(None, description="URL of the logo. Empty for a few images that have none.")
     description: str = Field(description="Markdown; may contain links.")
     version: str = Field(description="The latest stable release tag, or `latest` when there is none.")
-    version_timestamp: str = Field(description="UTC, as `YYYY-MM-DD HH:MM:SS+00:00`.")
+    version_timestamp: str = Field(description="UTC, as `YYYY-MM-DD HH:MM:SS+00:00`.", pattern=_TIMESTAMP)
     category: str = Field(
         description="Comma-separated categories, verbatim from the image (may contain stray spaces).",
         examples=["Network,DNS"],
     )
     stable: bool = Field(description="Whether the image publishes a `latest` tag.")
     deprecated: bool
-    stars: int = Field(description="GitHub stars of the image repository.")
-    monthly_pulls: int | None = Field(None, description="Pulls in the last 30 days, from Scarf.")
+    stars: Count = Field(description="GitHub stars of the image repository.")
+    monthly_pulls: Count | None = Field(None, description="Pulls in the last 30 days, from Scarf.")
     tags: list[Tag]
     architectures: list[Architecture]
     changelog: list[Changelog] | None = Field(
@@ -189,7 +194,7 @@ class ImageDetail(Image):
     setup_instructions: str | None = Field(None, description="The README's Application Setup section, as Markdown.")
     archived: bool = Field(description="Whether the GitHub repository is archived.")
     release_url: str | None = Field(None, description="The GitHub release for `version`.")
-    docker_hub_pulls: int | None = Field(
+    docker_hub_pulls: Count | None = Field(
         None, description="Lifetime pulls from Docker Hub (other registries are not counted)."
     )
     docs_url: str
@@ -246,6 +251,9 @@ class Status(BaseModel):
 
 
 class Envelope(BaseModel):
+    # `status` has a default but is always sent, so the spec must list it as required.
+    model_config = ConfigDict(json_schema_serialization_defaults_required=True)
+
     status: Literal["OK"] = "OK"
     last_updated: LastUpdated
 

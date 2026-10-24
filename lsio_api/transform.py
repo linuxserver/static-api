@@ -115,7 +115,8 @@ def get_changelog(readme_vars: ReadmeVars) -> tuple[list[Changelog] | None, str 
 
 
 def get_description(readme_vars: ReadmeVars) -> str:
-    return _str(readme_vars.get("project_blurb", "No description")).replace("\n", " ").strip(" \t\n\r")
+    blurb = readme_vars.get("project_blurb")  # a null blurb is as missing as an absent one
+    return _str("No description" if blurb is None else blurb).replace("\n", " ").strip(" \t\n\r")
 
 
 def get_env_vars(readme_vars: ReadmeVars) -> list[EnvVar] | None:
@@ -278,18 +279,18 @@ def get_config(readme_vars: ReadmeVars, github_url: str) -> Config:
 
 
 def split_categories(category: str) -> list[str]:
-    """ "Network,DNS" -> ["Network", "DNS"]"""
-    return [c.strip() for c in category.split(",") if c.strip()]
+    """ "Network,DNS" -> ["Network", "DNS"], each once, so an image never counts twice in a category."""
+    return list(dict.fromkeys(c.strip() for c in category.split(",") if c.strip()))
 
 
 # ---------------------------------------------------------------------------------------------------
 # Images
 
 
-def build_image(repo: RepoSnapshot, monthly_pulls: dict[str, int], hub_pulls: dict[str, int]) -> ImageDetail | None:
+def listed_image(repo: RepoSnapshot) -> tuple[str, str, ReadmeVars] | None:
     """
-    The image for a repository, or None when it isn't one we list: not an image repo, no readme-vars.yml,
-    or categorised Internal. Raises when readme-vars.yml is not valid YAML.
+    The image name, readme-vars.yml text and its v1 variables, or None when the repository isn't one we
+    list: not an image repo, no readme-vars.yml, or categorised Internal. Raises on invalid YAML.
     """
     if not is_image_repo(repo.name) or not repo.readme_vars:
         return None
@@ -297,6 +298,15 @@ def build_image(repo: RepoSnapshot, monthly_pulls: dict[str, int], hub_pulls: di
     readme_vars = parse_api_vars(repo.readme_vars, name)
     if not readme_vars or "Internal" in _str(readme_vars.get("project_categories", "")):
         return None
+    return name, repo.readme_vars, readme_vars
+
+
+def build_image(repo: RepoSnapshot, monthly_pulls: dict[str, int], hub_pulls: dict[str, int]) -> ImageDetail | None:
+    """The image for a repository, or None when it isn't one we list (see listed_image)."""
+    listed = listed_image(repo)
+    if not listed:
+        return None
+    name, text, readme_vars = listed
     category = _str(readme_vars.get("project_categories", ""))
     tags, stable = get_tags(readme_vars)
     changelog, initial_date = get_changelog(readme_vars)
@@ -323,7 +333,7 @@ def build_image(repo: RepoSnapshot, monthly_pulls: dict[str, int], hub_pulls: di
         config=config,
         categories=split_categories(category),
         deprecation_message=_optional_str(readme_vars.get("project_deprecation_message")) if deprecated else None,
-        setup_instructions=get_setup_instructions(repo.readme_vars, name, readme_vars),
+        setup_instructions=get_setup_instructions(text, name, readme_vars),
         archived=repo.archived,
         release_url=release.url if release else None,
         docker_hub_pulls=hub_pulls.get(name),
@@ -335,18 +345,33 @@ def build_image(repo: RepoSnapshot, monthly_pulls: dict[str, int], hub_pulls: di
     )
 
 
-def build_images(
-    repos: list[RepoSnapshot], monthly_pulls: dict[str, int], hub_pulls: dict[str, int]
-) -> list[ImageDetail]:
-    """Every listed image, sorted by repository name like the Python updater."""
-    images = []
+def _each_listed[T](repos: list[RepoSnapshot], make: Callable[[RepoSnapshot], T | None]) -> list[T]:
+    """`make` for every repository, sorted by name like the Python updater, leaving out the Nones."""
+    results = []
     for repo in sorted(repos, key=lambda repo: repo.name):
         try:
-            image = build_image(repo, monthly_pulls, hub_pulls)
+            result = make(repo)
         except Exception as e:
             # One broken readme-vars.yml must not take the whole API down with it.
             log.warning("  ! skipped %s: %s", repo.name, e)
             continue
-        if image:
-            images.append(image)
-    return images
+        if result is not None:
+            results.append(result)
+    return results
+
+
+def build_images(
+    repos: list[RepoSnapshot], monthly_pulls: dict[str, int], hub_pulls: dict[str, int]
+) -> list[ImageDetail]:
+    """Every listed image, sorted by repository name like the Python updater."""
+    return _each_listed(repos, lambda repo: build_image(repo, monthly_pulls, hub_pulls))
+
+
+def listed_image_names(repos: list[RepoSnapshot]) -> list[str]:
+    """The names build_images would list, without building the images."""
+
+    def name(repo: RepoSnapshot) -> str | None:
+        listed = listed_image(repo)
+        return listed[0] if listed else None
+
+    return _each_listed(repos, name)

@@ -1,5 +1,6 @@
 import pytest
 import yaml
+from jinja2.exceptions import SecurityError
 
 from lsio_api.readme_vars import parse_api_vars, parse_readme_vars
 
@@ -50,6 +51,11 @@ def test_none_for_missing_empty_or_non_mapping(text: str | None) -> None:
 
 def test_leaves_unknown_template_variables_alone() -> None:
     assert parse_readme_vars("a: '{{ other }} {{ project_name }}'", "x", "") == {"a": "{{ other }} x"}
+
+
+def test_templates_cannot_reach_python_internals() -> None:
+    with pytest.raises(SecurityError):
+        parse_readme_vars("a: \"{{ cycler.__init__.__globals__.os.popen('id').read() }}\"", "x", "")
 
 
 def test_raises_on_invalid_yaml() -> None:

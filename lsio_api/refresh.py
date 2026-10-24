@@ -20,7 +20,7 @@ from .snapshot import GithubSnapshot, PullsSnapshot, Snapshot, SourceName, load_
 from .sources.github import fetch_repos
 from .sources.http import client
 from .sources.pulls import fetch_docker_hub_pulls, fetch_scarf_pulls
-from .transform import build_images
+from .transform import listed_image_names
 
 log = logging.getLogger(__name__)
 
@@ -65,7 +65,7 @@ def refresh(
         snapshot.github = GithubSnapshot(fetched_at=now(), repos=repos)
 
     def dockerhub() -> str | None:
-        names = [image.name for image in build_images(snapshot.github.repos, {}, {})]
+        names = listed_image_names(snapshot.github.repos)
         pulls, failed = fetch_docker_hub_pulls(http, names, snapshot.dockerhub.pulls)
         if names and len(failed) == len(names):
             raise RuntimeError("every request failed")

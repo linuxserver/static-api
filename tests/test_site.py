@@ -80,5 +80,8 @@ def test_formatting() -> None:
     assert compact(17_321_271_697) == "17.3B"
     assert compact(186_886) == "186.9K"
     assert compact(42) == "42"
+    assert compact(999) == "999"
+    assert compact(999_999) == "1M"
     assert format_timestamp("2026-10-24T13:11:46.000Z") == "24 Oct 2026, 13:11 UTC"
+    assert format_timestamp("2026-10-31T23:30:00-01:00") == "1 Nov 2026, 00:30 UTC"
     assert format_timestamp("") == "never"

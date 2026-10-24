@@ -259,14 +259,29 @@ def create_app(fleet: Fleet, config: SiteConfig) -> FastAPI:
 
     # ------------------------------------------------------------------------------------- Spec and docs
 
+    def spec() -> dict[str, Any]:
+        """
+        The generated spec, without the 422 responses FastAPI adds to routes with path parameters: a static
+        host never sends them, so documenting them would only mislead clients.
+        """
+        if app.openapi_schema is None:
+            generated = app.openapi()  # cached on the app, so the edits below stick
+            for item in generated["paths"].values():
+                for operation in item.values():
+                    operation["responses"].pop("422", None)
+            schemas = generated.get("components", {}).get("schemas", {})
+            for name in ("HTTPValidationError", "ValidationError"):
+                schemas.pop(name, None)
+        return app.openapi()
+
     @app.get("/openapi.json", include_in_schema=False)
     def openapi_json() -> Response:
-        return Response(json.dumps(app.openapi(), indent=2, ensure_ascii=False) + "\n", media_type="application/json")
+        return Response(json.dumps(spec(), indent=2, ensure_ascii=False) + "\n", media_type="application/json")
 
     @app.get("/openapi.yaml", include_in_schema=False, response_class=YamlResponse)
     def openapi_yaml() -> str:
         return yaml.dump(
-            app.openapi(),
+            spec(),
             Dumper=getattr(yaml, "CSafeDumper", yaml.SafeDumper),
             sort_keys=False,
             allow_unicode=True,
@@ -275,7 +290,7 @@ def create_app(fleet: Fleet, config: SiteConfig) -> FastAPI:
 
     @app.get("/", include_in_schema=False, response_class=HTMLResponse)
     def docs() -> str:
-        return render_index(fleet, app.openapi(), config)
+        return render_index(fleet, spec(), config)
 
     @app.exception_handler(StarletteHTTPException)
     def not_found(request: Request, exc: StarletteHTTPException) -> Response:

@@ -8,14 +8,16 @@ from typing import Any
 
 import jinja2
 import yaml
+from jinja2.sandbox import ImmutableSandboxedEnvironment
 
 ReadmeVars = dict[str, Any]
 
 # The C parser when PyYAML has it (12x faster, same results), as the original's SafeLoader otherwise.
 _Loader = getattr(yaml, "CSafeLoader", yaml.SafeLoader)
 
-# Unknown variables stay as written, rather than becoming empty or raising.
-_jinja = jinja2.Environment(undefined=jinja2.DebugUndefined, keep_trailing_newline=True)
+# Unknown variables stay as written, rather than becoming empty or raising. Sandboxed, because the
+# templates come from any branch of any image repository and are rendered in CI next to its tokens.
+_jinja = ImmutableSandboxedEnvironment(undefined=jinja2.DebugUndefined, keep_trailing_newline=True)
 
 
 def _parse(text: str) -> ReadmeVars | None:

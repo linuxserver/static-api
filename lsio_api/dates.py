@@ -4,11 +4,15 @@ import datetime
 
 
 def parse_iso(timestamp: str | None) -> datetime.datetime | None:
-    """Either format, or None when it is empty or doesn't parse."""
+    """
+    Either format, or None when it is empty or doesn't parse. A time without an offset is UTC, not the
+    machine's local time, so builds don't depend on where they run (and every result is comparable).
+    """
     try:
-        return datetime.datetime.fromisoformat(timestamp) if timestamp else None
+        when = datetime.datetime.fromisoformat(timestamp) if timestamp else None
     except ValueError:
         return None
+    return when.replace(tzinfo=datetime.UTC) if when and when.tzinfo is None else when
 
 
 def python_timestamp(timestamp: str | None) -> str:

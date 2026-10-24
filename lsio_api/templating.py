@@ -22,7 +22,8 @@ def markdown(text: str | None) -> Markup:
 def compact(n: int) -> str:
     """12345678 -> "12.3M", like Intl's compact notation."""
     for size, suffix in ((1e9, "B"), (1e6, "M"), (1e3, "K")):
-        if n >= size:
+        # Anything from 0.99995 rounds to "1.0", so 999,999 is "1M" rather than "1000K", as in Intl.
+        if n / size >= 0.99995:
             return f"{n / size:.1f}".removesuffix(".0") + suffix
     return str(n)
 
@@ -34,7 +35,10 @@ def grouped(n: int) -> str:
 def format_timestamp(iso: str | None) -> str:
     """ "2026-10-24T13:11:46.000Z" -> "24 Oct 2026, 13:11 UTC" """
     when = parse_iso(iso)
-    return f"{when.day} {when.astimezone(datetime.UTC):%b %Y, %H:%M} UTC" if when else "never"
+    if not when:
+        return "never"
+    utc = when.astimezone(datetime.UTC)  # the day too, not just the month and time
+    return f"{utc.day} {utc:%b %Y, %H:%M} UTC"
 
 
 # Autoescaping covers .html and .xml, so values are escaped wherever they are interpolated.

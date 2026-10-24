@@ -36,7 +36,7 @@ def fetch_docker_hub_pulls(
                 "pull_count"
             ]
             return count
-        except (httpx2.HTTPError, KeyError, ValueError):
+        except Exception:  # anything (an odd body as much as a failed request) costs only this image
             return None
 
     with ThreadPoolExecutor(max_workers=4) as pool:
