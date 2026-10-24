@@ -1,5 +1,5 @@
 {
- "fetched_at": "2026-10-24T13:54:35.168Z",
+ "fetched_at": "2026-10-24T14:39:58.004Z",
  "repos": [
   {
    "name": "docker-adguardhome-sync",
@@ -846,7 +846,7 @@
    "name": "docker-freecad",
    "url": "https://github.com/linuxserver/docker-freecad",
    "stars": 64,
-   "pushed_at": "2026-10-17T15:11:16Z",
+   "pushed_at": "2026-10-24T14:11:51Z",
    "archived": false,
    "latest_release": {
     "tag": "1.1.4-ls155",
@@ -1141,7 +1141,7 @@
   {
    "name": "docker-jackett",
    "url": "https://github.com/linuxserver/docker-jackett",
-   "stars": 482,
+   "stars": 481,
    "pushed_at": "2026-10-24T11:57:54Z",
    "archived": false,
    "latest_release": {
@@ -1783,7 +1783,7 @@
   {
    "name": "docker-nzbget",
    "url": "https://github.com/linuxserver/docker-nzbget",
-   "stars": 192,
+   "stars": 191,
    "pushed_at": "2026-10-24T11:04:29Z",
    "archived": false,
    "latest_release": {
@@ -2043,7 +2043,7 @@
   {
    "name": "docker-plex",
    "url": "https://github.com/linuxserver/docker-plex",
-   "stars": 1444,
+   "stars": 1443,
    "pushed_at": "2026-10-20T17:25:25Z",
    "archived": false,
    "latest_release": {
@@ -2182,7 +2182,7 @@
   {
    "name": "docker-qbittorrent",
    "url": "https://github.com/linuxserver/docker-qbittorrent",
-   "stars": 1754,
+   "stars": 1753,
    "pushed_at": "2026-10-22T15:03:21Z",
    "archived": false,
    "latest_release": {
@@ -2221,7 +2221,7 @@
   {
    "name": "docker-radarr",
    "url": "https://github.com/linuxserver/docker-radarr",
-   "stars": 972,
+   "stars": 971,
    "pushed_at": "2026-10-20T19:16:06Z",
    "archived": false,
    "latest_release": {
@@ -2538,7 +2538,7 @@
   {
    "name": "docker-sonarr",
    "url": "https://github.com/linuxserver/docker-sonarr",
-   "stars": 1136,
+   "stars": 1135,
    "pushed_at": "2026-10-24T01:59:34Z",
    "archived": false,
    "latest_release": {
@@ -2911,7 +2911,7 @@
   {
    "name": "docker-webtop",
    "url": "https://github.com/linuxserver/docker-webtop",
-   "stars": 4458,
+   "stars": 4457,
    "pushed_at": "2026-10-22T18:36:50Z",
    "archived": false,
    "latest_release": {
