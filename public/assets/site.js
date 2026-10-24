@@ -1,4 +1,3 @@
-// @ts-check
 // The docs page's only script: theme toggle, "Try it" requests, and highlighting the endpoint in view.
 // Everything works without it except trying requests in place (the Open links still work).
 

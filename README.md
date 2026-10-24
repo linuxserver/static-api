@@ -3,17 +3,16 @@
 The [LinuxServer.io API](https://github.com/linuxserver/docker-lsio-api) rebuilt as a static site: every
 endpoint is a plain file, regenerated daily by GitHub Actions from the same sources, with an OpenAPI spec
 and a docs page in the design of [www.linuxserver.io](https://linuxserver.github.io/site/). There is no
-server, database or container to run.
+server, database or container to run in production.
 
 ```bash
-npm install
-GITHUB_TOKEN=$(gh auth token) npm run refresh   # data/ from GitHub, Scarf (SCARF_TOKEN) and Docker Hub
-npm run build                                   # dist/, validated against the spec
-npm run preview                                 # http://localhost:4322/
-npm run check                                   # types, formatting, OpenAPI lint, tests
+python3.13 -m venv .venv && . .venv/bin/activate
+pip install -e '.[dev]'
+GITHUB_TOKEN=$(gh auth token) python -m lsio_api.refresh   # data/ from GitHub, Scarf (SCARF_TOKEN) and Docker Hub
+python -m lsio_api.build                                   # dist/
+python -m lsio_api.serve                                   # the same app, live, on http://localhost:8000/
+ruff check . && ruff format --check . && mypy lsio_api tests && pytest
 ```
-
-Node 24.2 or later runs the TypeScript directly; there is no compile step.
 
 ## Endpoints
 
@@ -55,36 +54,33 @@ and so can't also be a directory.
 
 ## How it works
 
+It is the original API's design: a FastAPI app whose routes return Pydantic models, with the OpenAPI spec
+generated from them. Instead of serving it, the build requests every route through FastAPI's test client
+and writes each response to a file.
+
 ```
-GitHub (GraphQL) ─┐                                        ┌─ dist/api/v1/…  (JSON, YAML, Atom)
-Scarf ────────────┼─ npm run refresh ─> data/*.json ─ npm run build ─┼─ dist/openapi.{json,yaml}
-Docker Hub ───────┘   (committed daily)             (validated)      └─ dist/index.html, 404.html
+GitHub (GraphQL) ─┐                                     ┌─ dist/api/v1/…  (JSON, YAML, Atom)
+Scarf ────────────┼─ refresh ─> data/*.json ─ build ─────┼─ dist/openapi.{json,yaml}
+Docker Hub ───────┘  (committed daily)    (FastAPI app)  └─ dist/index.html, 404.html
 ```
 
-- **`src/refresh.ts`** fetches each source. A source that fails keeps its previous data and records the
-  error in `data/status.json`, as the Python updater did, so the API keeps serving and `/health`
-  reports `Failed`.
-- **`src/sources/github.ts`** gets every repository's stars, latest stable release and `readme-vars.yml`
-  (master, then main, develop, nightly) for the whole org in about seven GraphQL requests, instead of
-  several REST calls per repository.
-- **`src/transform.ts`** is a port of `updater.py`: one `get_*` function per field, in the same order, so
-  the output matches. The parity tests in `test/transform.test.ts` compare it with real API responses.
-- **`src/api/responses.ts`** builds each endpoint's payload; **`src/build.ts`** writes them out.
-- **`openapi/openapi.yaml`** is written by hand and is the contract. The build validates every file it
-  produces against it (`src/validate.ts`) and refuses to write output that doesn't match, so the spec and
-  the data can't drift apart. The docs page is generated from the spec.
-- **`src/site/`** renders the docs page with a tiny escaping template tag (`html.ts`). Styles in
-  `public/assets/site.css` are the site's Raft tokens in plain CSS.
+| Module | |
+| --- | --- |
+| `lsio_api/models.py` | Every response shape. The v1 models are the original's, field for field; field descriptions are the spec's documentation. |
+| `lsio_api/transform.py` | `updater.py`'s `get_*` functions: readme-vars.yml and GitHub data to an image. The parity tests compare its output with real API responses. |
+| `lsio_api/app.py` | The FastAPI app: one route per endpoint. |
+| `lsio_api/build.py` | Requests every route (its paths come from the app, so nothing is missed) and writes `dist/`. A response that doesn't fit its model fails the build. |
+| `lsio_api/refresh.py`, `sources/` | Fetches each source. One that fails keeps its previous data and the error is recorded in `data/status.json`, as the Python updater did, so the API keeps serving and `/health` reports `Failed`. GitHub's data comes from about seven GraphQL requests rather than several REST calls per repository. |
+| `lsio_api/site.py`, `templates/` | The docs page, rendered from the generated spec with Jinja. Styles in `public/assets/` are the site's Raft tokens in plain CSS. |
 
 `data/` holds raw source data rather than finished responses, so changing how a field is derived needs no
 refetch, builds are deterministic and work offline, and the daily commit is a readable diff.
 
 ### Adding a field
 
-1. Add it to the type in `src/api/types.ts`.
-2. Derive it in `src/transform.ts` (or `src/api/responses.ts` for fleet-wide data).
-3. Describe it in `openapi/openapi.yaml`. The build fails until you do.
-4. Test it. If it comes from `readme-vars.yml`, add a case to `test/transform.test.ts`.
+1. Add it to the model in `lsio_api/models.py`, with a description. That also documents it.
+2. Derive it in `lsio_api/transform.py` (or `lsio_api/responses.py` for fleet-wide data).
+3. Test it. If it comes from `readme-vars.yml`, add a case to `tests/test_transform.py`.
 
 Fields in the v1 list endpoints must stay exactly as the original API has them; add new ones to
 `ImageDetail` (the catalog) instead.
@@ -103,3 +99,5 @@ GitHub Pages. It also deploys on every push to `main` (with the committed data) 
 
 To refresh more often, change the cron. GitHub GraphQL and Docker Hub would both cope with hourly runs,
 but every run that changes data adds a commit.
+
+The `node` branch has the same API built with TypeScript; it is kept for reference and is not deployed.
