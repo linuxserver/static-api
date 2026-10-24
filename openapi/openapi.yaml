@@ -1,0 +1,882 @@
+openapi: 3.1.0
+info:
+  title: LinuxServer API
+  version: '1.1'
+  summary: Metadata for every LinuxServer.io container image.
+  description: |
+    Everything we know about the LinuxServer.io images: versions, tags, architectures, changelogs,
+    container parameters, pull counts and ready-to-use compose snippets.
+
+    The API is a set of static files, rebuilt daily from each image's `readme-vars.yml`, GitHub releases,
+    Scarf and Docker Hub. Every endpoint is a plain `GET` with no authentication and no rate limit beyond
+    the host's. Fields that have no value are omitted rather than `null`.
+
+    **Query parameters are not supported.** The original API's `include_config` and `include_deprecated`
+    switches are separate files instead; see the Compatibility endpoints.
+  contact:
+    name: LinuxServer.io
+    url: https://www.linuxserver.io/support/
+  license:
+    name: GPL-3.0
+    url: https://www.gnu.org/licenses/gpl-3.0.html
+servers:
+  - url: https://api.linuxserver.io
+security: []
+tags:
+  - name: Images
+    description: Every image, or one image in full.
+  - name: Fleet
+    description: Numbers, categories and changes across all images.
+  - name: Service
+    description: Whether the data is fresh.
+  - name: Compatibility
+    description: |
+      The original api.linuxserver.io endpoints, same paths and same response shapes. The
+      extensionless paths are served as `application/octet-stream` by some static hosts; the `.json`
+      equivalents are identical and served as `application/json`.
+
+paths:
+  /api/v1/catalog/{name}.json:
+    get:
+      tags: [Images]
+      operationId: getImage
+      summary: Get one image
+      description: |
+        Everything about one image, deprecated images included: the full changelog, container
+        configuration, setup instructions, Docker Hub pulls and generated `docker run` and compose snippets.
+      parameters:
+        - $ref: '#/components/parameters/ImageName'
+      responses:
+        '200':
+          description: The image.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImageResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/catalog/{name}/docker-compose.yml:
+    get:
+      tags: [Images]
+      operationId: getImageCompose
+      summary: Get a compose file for one image
+      description: |
+        A Docker Compose file with the image's recommended settings, optional ones marked `# optional`.
+        The same text is in `snippets.docker_compose` of the image.
+      parameters:
+        - $ref: '#/components/parameters/ImageName'
+      responses:
+        '200':
+          description: The compose file.
+          content:
+            application/yaml:
+              schema:
+                type: string
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/catalog.json:
+    get:
+      tags: [Images]
+      operationId: getCatalog
+      summary: Get every image in full
+      description: |
+        Every image, deprecated ones included, with the same detail as `/api/v1/catalog/{name}.json`.
+        One request for everything; use the smaller list endpoints when you only need a summary.
+      responses:
+        '200':
+          description: All images.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogResponse'
+
+  /api/v1/categories.json:
+    get:
+      tags: [Fleet]
+      operationId: getCategories
+      summary: Get image categories
+      description: Categories of the current (not deprecated) images, most populated first.
+      responses:
+        '200':
+          description: The categories.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoriesResponse'
+
+  /api/v1/stats.json:
+    get:
+      tags: [Fleet]
+      operationId: getStats
+      summary: Get fleet statistics
+      description: Headline numbers across the current (not deprecated) images.
+      responses:
+        '200':
+          description: The statistics.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatsResponse'
+
+  /api/v1/changelog.json:
+    get:
+      tags: [Fleet]
+      operationId: getChangelog
+      summary: Get recent changelog entries
+      description: |
+        The 100 most recent changelog entries across the current images, newest first. These are the
+        notable changes to an image (new base, new variables, breaking changes), not every rebuild.
+      responses:
+        '200':
+          description: The changelog.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChangelogResponse'
+
+  /api/v1/changelog.xml:
+    get:
+      tags: [Fleet]
+      operationId: getChangelogFeed
+      summary: Subscribe to changelog entries
+      description: The same entries as `/api/v1/changelog.json`, as an Atom feed.
+      responses:
+        '200':
+          description: An Atom feed.
+          content:
+            application/atom+xml:
+              schema:
+                type: string
+
+  /api/v1/status.json:
+    get:
+      tags: [Service]
+      operationId: getStatus
+      summary: Get data freshness
+      description: |
+        The outcome of the last refresh of each data source. When a source fails, the previous data keeps
+        being served, so check `fetched_at` to see how old it is.
+      responses:
+        '200':
+          description: The status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+
+  /health:
+    get:
+      tags: [Compatibility]
+      operationId: health_health_get
+      summary: Get the health status
+      description: |
+        `"Success"` when the last GitHub refresh worked, `"Failed"` when it did not (the previous data is
+        still served). A static host cannot change the status code, so this is always `200`; read the body.
+      responses:
+        '200':
+          $ref: '#/components/responses/Health'
+
+  /health.json:
+    get:
+      tags: [Compatibility]
+      operationId: getHealthJson
+      summary: Get the health status (JSON)
+      description: The same as `/health`, served as `application/json`.
+      responses:
+        '200':
+          $ref: '#/components/responses/Health'
+
+  /api/v1/images:
+    get:
+      tags: [Compatibility]
+      operationId: images_api_v1_images_get
+      summary: Get a list of images
+      description: |
+        Current images without their configuration: the original endpoint with its default parameters.
+        Query parameters are ignored by static hosts; use the files below for the other combinations.
+
+        | Original | File |
+        | --- | --- |
+        | `/api/v1/images` | `/api/v1/images.json` |
+        | `?include_config=true` | `/api/v1/images.config.json` |
+        | `?include_deprecated=true` | `/api/v1/images.deprecated.json` |
+        | `?include_config=true&include_deprecated=true` | `/api/v1/images.config.deprecated.json` |
+      responses:
+        '200':
+          $ref: '#/components/responses/Images'
+
+  /api/v1/images.json:
+    get:
+      tags: [Compatibility]
+      operationId: listImages
+      summary: List current images
+      description: Current images without their configuration. The same as `/api/v1/images`.
+      responses:
+        '200':
+          $ref: '#/components/responses/Images'
+
+  /api/v1/images.config.json:
+    get:
+      tags: [Compatibility]
+      operationId: listImagesWithConfig
+      summary: List current images with configuration
+      description: The original `/api/v1/images?include_config=true`.
+      responses:
+        '200':
+          $ref: '#/components/responses/Images'
+
+  /api/v1/images.deprecated.json:
+    get:
+      tags: [Compatibility]
+      operationId: listImagesWithDeprecated
+      summary: List all images, deprecated included
+      description: The original `/api/v1/images?include_deprecated=true`.
+      responses:
+        '200':
+          $ref: '#/components/responses/Images'
+
+  /api/v1/images.config.deprecated.json:
+    get:
+      tags: [Compatibility]
+      operationId: listImagesWithConfigAndDeprecated
+      summary: List all images with configuration
+      description: The original `/api/v1/images?include_config=true&include_deprecated=true`.
+      responses:
+        '200':
+          $ref: '#/components/responses/Images'
+
+components:
+  parameters:
+    ImageName:
+      name: name
+      in: path
+      required: true
+      description: The image name, as in `lscr.io/linuxserver/<name>`.
+      schema:
+        type: string
+        pattern: '^[a-z0-9][a-z0-9._-]*$'
+      example: sonarr
+
+  responses:
+    NotFound:
+      description: There is no image with that name.
+    Health:
+      description: The health status.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Health'
+    Images:
+      description: The images.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ImagesResponse'
+
+  schemas:
+    Health:
+      type: string
+      enum: [Success, Failed]
+
+    Timestamp:
+      type: string
+      description: UTC, as `YYYY-MM-DD HH:MM:SS+00:00`.
+      pattern: '^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\+00:00$'
+      examples: ['2026-10-24 13:11:46+00:00']
+
+    Tag:
+      type: object
+      required: [tag, desc]
+      properties:
+        tag:
+          type: string
+          examples: [latest]
+        desc:
+          type: string
+
+    Architecture:
+      type: object
+      required: [arch, tag]
+      properties:
+        arch:
+          type: string
+          examples: [x86_64, arm64]
+        tag:
+          type: string
+          description: The architecture-specific tag.
+          examples: [amd64-latest]
+
+    Changelog:
+      type: object
+      required: [date, desc]
+      properties:
+        date:
+          type: string
+          format: date
+        desc:
+          type: string
+
+    Volume:
+      type: object
+      required: [path, host_path, desc, optional]
+      properties:
+        path:
+          type: string
+          description: Path inside the container.
+        host_path:
+          type: string
+          description: Example path on the host.
+        desc:
+          type: string
+        optional:
+          type: boolean
+
+    Port:
+      type: object
+      required: [external, internal, desc, optional]
+      properties:
+        external:
+          type: string
+        internal:
+          type: string
+          description: Container port, with `/udp` when it is UDP.
+        desc:
+          type: string
+        optional:
+          type: boolean
+
+    EnvVar:
+      type: object
+      required: [name, value, desc, optional]
+      properties:
+        name:
+          type: string
+        value:
+          type: string
+          description: Example or default value.
+        desc:
+          type: string
+        optional:
+          type: boolean
+
+    Custom:
+      type: object
+      description: Any other `docker run` flag, with its compose equivalent.
+      required: [name, name_compose, value, desc, optional]
+      properties:
+        name:
+          type: string
+          description: The `docker run` flag without the leading `--`.
+          examples: [shm-size]
+        name_compose:
+          type: string
+          description: The compose key.
+          examples: [shm_size]
+        value:
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                type: string
+        desc:
+          type: string
+        optional:
+          type: boolean
+
+    SecurityOpt:
+      type: object
+      required: [run_var, compose_var, desc, optional]
+      properties:
+        run_var:
+          type: string
+          examples: [seccomp=unconfined]
+        compose_var:
+          type: string
+          examples: ['seccomp:unconfined']
+        desc:
+          type: string
+        optional:
+          type: boolean
+
+    Device:
+      type: object
+      required: [path, host_path, desc, optional]
+      properties:
+        path:
+          type: string
+        host_path:
+          type: string
+        desc:
+          type: string
+        optional:
+          type: boolean
+
+    Cap:
+      type: object
+      required: [cap_add, desc, optional]
+      properties:
+        cap_add:
+          type: string
+          examples: [NET_ADMIN]
+        desc:
+          type: string
+        optional:
+          type: boolean
+
+    Hostname:
+      type: object
+      required: [hostname, desc, optional]
+      properties:
+        hostname:
+          type: string
+        desc:
+          type: string
+        optional:
+          type: boolean
+
+    MacAddress:
+      type: object
+      required: [mac_address, desc, optional]
+      properties:
+        mac_address:
+          type: string
+        desc:
+          type: string
+        optional:
+          type: boolean
+
+    Config:
+      type: object
+      description: How to run the container. Each list holds required entries first, then optional ones.
+      properties:
+        application_setup:
+          type: string
+          format: uri
+          description: Link to the Application Setup section of the README.
+        readonly_supported:
+          type: boolean
+          description: Runs with a read-only root filesystem.
+        nonroot_supported:
+          type: boolean
+          description: Runs as a non-root user.
+        privileged:
+          type: boolean
+        networking:
+          type: string
+          description: Network mode, e.g. `host`.
+        hostname:
+          $ref: '#/components/schemas/Hostname'
+        mac_address:
+          $ref: '#/components/schemas/MacAddress'
+        env_vars:
+          type: array
+          items:
+            $ref: '#/components/schemas/EnvVar'
+        volumes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Volume'
+        ports:
+          type: array
+          items:
+            $ref: '#/components/schemas/Port'
+        custom:
+          type: array
+          items:
+            $ref: '#/components/schemas/Custom'
+        security_opt:
+          type: array
+          items:
+            $ref: '#/components/schemas/SecurityOpt'
+        devices:
+          type: array
+          items:
+            $ref: '#/components/schemas/Device'
+        caps:
+          type: array
+          items:
+            $ref: '#/components/schemas/Cap'
+
+    Image:
+      type: object
+      required:
+        [
+          name,
+          github_url,
+          description,
+          version,
+          version_timestamp,
+          category,
+          stable,
+          deprecated,
+          stars,
+          tags,
+          architectures,
+        ]
+      properties:
+        name:
+          type: string
+          examples: [sonarr]
+        initial_date:
+          type: string
+          format: date
+          description: Date of the image's first changelog entry.
+        github_url:
+          type: string
+          format: uri
+        project_url:
+          type: string
+          description: The upstream project's website.
+        project_logo:
+          type: string
+          description: URL of the logo. Empty for a few images that have none.
+        description:
+          type: string
+          description: Markdown; may contain links.
+        version:
+          type: string
+          description: The latest stable release tag, or `latest` when there is none.
+          examples: [4.0.15.2941-ls290]
+        version_timestamp:
+          $ref: '#/components/schemas/Timestamp'
+        category:
+          type: string
+          description: Comma-separated categories, verbatim from the image (may contain stray spaces).
+          examples: ['Network,DNS']
+        stable:
+          type: boolean
+          description: Whether the image publishes a `latest` tag.
+        deprecated:
+          type: boolean
+        stars:
+          type: integer
+          minimum: 0
+          description: GitHub stars of the image repository.
+        monthly_pulls:
+          type: integer
+          minimum: 0
+          description: Pulls in the last 30 days, from Scarf.
+        tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tag'
+        architectures:
+          type: array
+          items:
+            $ref: '#/components/schemas/Architecture'
+        changelog:
+          type: array
+          description: The most recent entries; three in list responses, all in `ImageDetail`.
+          items:
+            $ref: '#/components/schemas/Changelog'
+        config:
+          $ref: '#/components/schemas/Config'
+
+    Repository:
+      type: object
+      required: [linuxserver]
+      properties:
+        linuxserver:
+          type: array
+          items:
+            $ref: '#/components/schemas/Image'
+
+    ImagesData:
+      type: object
+      required: [repositories]
+      properties:
+        repositories:
+          $ref: '#/components/schemas/Repository'
+
+    ImagesResponse:
+      type: object
+      required: [status, last_updated, data]
+      properties:
+        status:
+          $ref: '#/components/schemas/ResponseStatus'
+        last_updated:
+          $ref: '#/components/schemas/Timestamp'
+        data:
+          $ref: '#/components/schemas/ImagesData'
+
+    ResponseStatus:
+      type: string
+      const: OK
+
+    Registries:
+      type: object
+      description: Where the image is published.
+      required: [lscr, ghcr, docker_hub]
+      properties:
+        lscr:
+          type: string
+          examples: [lscr.io/linuxserver/sonarr]
+        ghcr:
+          type: string
+          examples: [ghcr.io/linuxserver/sonarr]
+        docker_hub:
+          type: string
+          examples: [docker.io/linuxserver/sonarr]
+
+    Snippets:
+      type: object
+      description: Ready-to-use commands with every parameter, optional ones marked.
+      required: [docker_compose, docker_run]
+      properties:
+        docker_compose:
+          type: string
+        docker_run:
+          type: string
+
+    ImageDetail:
+      description: An image with everything this API knows about it.
+      allOf:
+        - $ref: '#/components/schemas/Image'
+        - type: object
+          required: [config, categories, archived, docs_url, registries, snippets]
+          properties:
+            changelog:
+              type: array
+              description: Every entry, newest first.
+              items:
+                $ref: '#/components/schemas/Changelog'
+            config:
+              $ref: '#/components/schemas/Config'
+            categories:
+              type: array
+              description: '`category`, split and trimmed.'
+              items:
+                type: string
+            deprecation_message:
+              type: string
+              description: Why the image is deprecated, when it is.
+            setup_instructions:
+              type: string
+              description: The README's Application Setup section, as Markdown.
+            archived:
+              type: boolean
+              description: Whether the GitHub repository is archived.
+            release_url:
+              type: string
+              format: uri
+              description: The GitHub release for `version`.
+            docker_hub_pulls:
+              type: integer
+              minimum: 0
+              description: Lifetime pulls from Docker Hub (other registries are not counted).
+            docs_url:
+              type: string
+              format: uri
+            registries:
+              $ref: '#/components/schemas/Registries'
+            snippets:
+              $ref: '#/components/schemas/Snippets'
+
+    ImageResponse:
+      type: object
+      required: [status, last_updated, data]
+      properties:
+        status:
+          $ref: '#/components/schemas/ResponseStatus'
+        last_updated:
+          $ref: '#/components/schemas/Timestamp'
+        data:
+          type: object
+          required: [image]
+          properties:
+            image:
+              $ref: '#/components/schemas/ImageDetail'
+
+    CatalogResponse:
+      type: object
+      required: [status, last_updated, data]
+      properties:
+        status:
+          $ref: '#/components/schemas/ResponseStatus'
+        last_updated:
+          $ref: '#/components/schemas/Timestamp'
+        data:
+          type: object
+          required: [images]
+          properties:
+            images:
+              type: array
+              items:
+                $ref: '#/components/schemas/ImageDetail'
+
+    Category:
+      type: object
+      required: [name, slug, count, images]
+      properties:
+        name:
+          type: string
+          examples: [Media Servers]
+        slug:
+          type: string
+          examples: [media-servers]
+        count:
+          type: integer
+          minimum: 1
+        images:
+          type: array
+          description: Image names, alphabetical.
+          items:
+            type: string
+
+    CategoriesResponse:
+      type: object
+      required: [status, last_updated, data]
+      properties:
+        status:
+          $ref: '#/components/schemas/ResponseStatus'
+        last_updated:
+          $ref: '#/components/schemas/Timestamp'
+        data:
+          type: object
+          required: [categories]
+          properties:
+            categories:
+              type: array
+              items:
+                $ref: '#/components/schemas/Category'
+
+    Stats:
+      type: object
+      required:
+        - images
+        - deprecated
+        - monthly_pulls
+        - docker_hub_pulls
+        - stars
+        - architectures
+        - readonly_supported
+        - nonroot_supported
+        - updated_last_7_days
+        - categories
+      properties:
+        images:
+          type: integer
+          description: Current images.
+        deprecated:
+          type: integer
+          description: Deprecated images (not counted anywhere else).
+        monthly_pulls:
+          type: integer
+          description: Sum of `monthly_pulls`.
+        docker_hub_pulls:
+          type: integer
+          description: Sum of `docker_hub_pulls`. A lower bound; other registries are not counted.
+        stars:
+          type: integer
+        architectures:
+          type: object
+          description: Images available for each architecture.
+          additionalProperties:
+            type: integer
+          examples: [{ x86_64: 203, arm64: 190 }]
+        readonly_supported:
+          type: integer
+        nonroot_supported:
+          type: integer
+        updated_last_7_days:
+          type: integer
+          description: Images with a release in the 7 days before `last_updated`.
+        categories:
+          type: integer
+        first_release:
+          type: string
+          format: date
+          description: The oldest `initial_date`.
+
+    StatsResponse:
+      type: object
+      required: [status, last_updated, data]
+      properties:
+        status:
+          $ref: '#/components/schemas/ResponseStatus'
+        last_updated:
+          $ref: '#/components/schemas/Timestamp'
+        data:
+          type: object
+          required: [stats]
+          properties:
+            stats:
+              $ref: '#/components/schemas/Stats'
+
+    ChangelogEntry:
+      allOf:
+        - $ref: '#/components/schemas/Changelog'
+        - type: object
+          required: [image]
+          properties:
+            image:
+              type: string
+
+    ChangelogResponse:
+      type: object
+      required: [status, last_updated, data]
+      properties:
+        status:
+          $ref: '#/components/schemas/ResponseStatus'
+        last_updated:
+          $ref: '#/components/schemas/Timestamp'
+        data:
+          type: object
+          required: [changelog]
+          properties:
+            changelog:
+              type: array
+              maxItems: 100
+              items:
+                $ref: '#/components/schemas/ChangelogEntry'
+
+    SourceStatus:
+      type: object
+      required: [ok, checked_at]
+      properties:
+        ok:
+          type: boolean
+        checked_at:
+          type: string
+          format: date-time
+          description: When the last refresh tried this source.
+        fetched_at:
+          type: string
+          format: date-time
+          description: When this source last returned data.
+        error:
+          type: string
+          description: Why the last attempt failed, or what it could not fetch.
+
+    Status:
+      type: object
+      required: [health, images, deprecated, sources]
+      properties:
+        health:
+          $ref: '#/components/schemas/Health'
+        images:
+          type: integer
+        deprecated:
+          type: integer
+        sources:
+          type: object
+          description: '`github` (images, versions, stars), `scarf` (monthly pulls), `dockerhub` (lifetime pulls).'
+          additionalProperties:
+            $ref: '#/components/schemas/SourceStatus'
+
+    StatusResponse:
+      type: object
+      required: [status, last_updated, data]
+      properties:
+        status:
+          $ref: '#/components/schemas/ResponseStatus'
+        last_updated:
+          $ref: '#/components/schemas/Timestamp'
+        data:
+          type: object
+          required: [status]
+          properties:
+            status:
+              $ref: '#/components/schemas/Status'

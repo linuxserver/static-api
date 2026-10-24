@@ -1,0 +1,5 @@
+extends:
+  - recommended
+rules:
+  # A static file either exists or the host 404s; only the {name} endpoints can meaningfully miss.
+  operation-4xx-response: off

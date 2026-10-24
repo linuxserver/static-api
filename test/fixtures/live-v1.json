@@ -1,0 +1,1512 @@
+[
+ {
+  "name": "adguardhome-sync",
+  "initial_date": "2021-04-08",
+  "github_url": "https://github.com/linuxserver/docker-adguardhome-sync",
+  "project_url": "https://github.com/bakito/adguardhome-sync/",
+  "project_logo": "https://raw.githubusercontent.com/linuxserver/docker-templates/master/linuxserver.io/img/adguardhomesync-icon.png",
+  "description": "adguardhome-sync is a tool to synchronize AdGuardHome config to replica instances.",
+  "version": "v0.9.5-ls179",
+  "version_timestamp": "2026-10-24 11:25:58+00:00",
+  "category": "Network,DNS",
+  "stable": true,
+  "deprecated": false,
+  "stars": 65,
+  "monthly_pulls": 186886,
+  "tags": [
+   {
+    "tag": "latest",
+    "desc": "Stable releases"
+   }
+  ],
+  "architectures": [
+   {
+    "arch": "x86_64",
+    "tag": "amd64-latest"
+   },
+   {
+    "arch": "arm64",
+    "tag": "arm64v8-latest"
+   }
+  ],
+  "changelog": [
+   {
+    "date": "2026-07-05",
+    "desc": "Rebase to Alpine 3.24."
+   },
+   {
+    "date": "2025-12-28",
+    "desc": "Rebase to Alpine 3.23."
+   },
+   {
+    "date": "2025-07-05",
+    "desc": "Rebase to Alpine 3.22."
+   }
+  ],
+  "config": {
+   "application_setup": "https://github.com/linuxserver/docker-adguardhome-sync?tab=readme-ov-file#application-setup",
+   "readonly_supported": true,
+   "nonroot_supported": true,
+   "env_vars": [
+    {
+     "name": "PUID",
+     "value": "1000",
+     "desc": "User ID",
+     "optional": false
+    },
+    {
+     "name": "PGID",
+     "value": "1000",
+     "desc": "Group ID",
+     "optional": false
+    },
+    {
+     "name": "TZ",
+     "value": "Etc/UTC",
+     "desc": "Timezone",
+     "optional": false
+    },
+    {
+     "name": "CONFIGFILE",
+     "value": "/config/adguardhome-sync.yaml",
+     "desc": "Set a custom config file.",
+     "optional": true
+    }
+   ],
+   "volumes": [
+    {
+     "path": "/config",
+     "host_path": "/path/to/adguardhome-sync/config",
+     "desc": "Contains all relevant configuration files.",
+     "optional": false
+    }
+   ],
+   "ports": [
+    {
+     "external": "8080",
+     "internal": "8080",
+     "desc": "Port for AdGuardHome Sync's web API.",
+     "optional": false
+    }
+   ]
+  }
+ },
+ {
+  "name": "sonarr",
+  "initial_date": "2015-08-31",
+  "github_url": "https://github.com/linuxserver/docker-sonarr",
+  "project_url": "https://sonarr.tv/",
+  "project_logo": "https://raw.githubusercontent.com/linuxserver/docker-templates/master/linuxserver.io/img/sonarr-banner.png",
+  "description": "sonarr (formerly NZBdrone) is a PVR for usenet and bittorrent users. It can monitor multiple RSS feeds for new episodes of your favorite shows and will grab, sort and rename them. It can also be configured to automatically upgrade the quality of files already downloaded when a better quality format becomes available.",
+  "version": "4.0.20.3014-ls1",
+  "version_timestamp": "2026-10-20 19:16:08+00:00",
+  "category": "Media Management",
+  "stable": true,
+  "deprecated": false,
+  "stars": 1136,
+  "monthly_pulls": 19599636,
+  "tags": [
+   {
+    "tag": "latest",
+    "desc": "Stable releases from Sonarr"
+   },
+   {
+    "tag": "develop",
+    "desc": "Development releases from Sonarr"
+   }
+  ],
+  "architectures": [
+   {
+    "arch": "x86_64",
+    "tag": "amd64-latest"
+   },
+   {
+    "arch": "arm64",
+    "tag": "arm64v8-latest"
+   }
+  ],
+  "changelog": [
+   {
+    "date": "2026-10-19",
+    "desc": "Add krb5-libs for better postgresql support."
+   },
+   {
+    "date": "2026-10-12",
+    "desc": "Update `develop` branch to v5. New v5 installs will write initial credentials to container log."
+   },
+   {
+    "date": "2026-07-09",
+    "desc": "Workaround malformed ncurses database."
+   }
+  ],
+  "config": {
+   "application_setup": "https://github.com/linuxserver/docker-sonarr?tab=readme-ov-file#application-setup",
+   "readonly_supported": true,
+   "nonroot_supported": true,
+   "volumes": [
+    {
+     "path": "/config",
+     "host_path": "/path/to/sonarr/data",
+     "desc": "Database and sonarr configs",
+     "optional": false
+    },
+    {
+     "path": "/tv",
+     "host_path": "/path/to/tvseries",
+     "desc": "Location of TV library on disk (See note in Application setup)",
+     "optional": true
+    },
+    {
+     "path": "/downloads",
+     "host_path": "/path/to/downloadclient-downloads",
+     "desc": "Location of download managers output directory (See note in Application setup)",
+     "optional": true
+    }
+   ],
+   "ports": [
+    {
+     "external": "8989",
+     "internal": "8989",
+     "desc": "The port for the Sonarr web interface",
+     "optional": false
+    }
+   ]
+  }
+ },
+ {
+  "name": "wireguard",
+  "initial_date": "2020-03-31",
+  "github_url": "https://github.com/linuxserver/docker-wireguard",
+  "project_url": "https://www.wireguard.com/",
+  "project_logo": "https://www.wireguard.com/img/wireguard.svg",
+  "description": "[WireGuard\u00ae] is an extremely simple yet fast and modern VPN that utilizes state-of-the-art cryptography. It aims to be faster, simpler, leaner, and more useful than IPsec, while avoiding the massive headache. It intends to be considerably more performant than OpenVPN. WireGuard is designed as a general purpose VPN for running on embedded interfaces and super computers alike, fit for many different circumstances. Initially released for the Linux kernel, it is now cross-platform (Windows, macOS, BSD, iOS, Android) and widely deployable. It is currently under heavy development, but already it might be regarded as the most secure, easiest to use, and simplest VPN solution in the industry.",
+  "version": "1.0.20260223-r0-ls127",
+  "version_timestamp": "2026-10-22 16:02:34+00:00",
+  "category": "Network,VPN",
+  "stable": true,
+  "deprecated": false,
+  "stars": 3649,
+  "monthly_pulls": 1076027,
+  "tags": [
+   {
+    "tag": "latest",
+    "desc": "Stable releases"
+   }
+  ],
+  "architectures": [
+   {
+    "arch": "x86_64",
+    "tag": "amd64-latest"
+   },
+   {
+    "arch": "arm64",
+    "tag": "arm64v8-latest"
+   }
+  ],
+  "changelog": [
+   {
+    "date": "2026-07-05",
+    "desc": "Rebase to Alpine 3.24."
+   },
+   {
+    "date": "2026-01-24",
+    "desc": "Rebase to Alpine 3.23 again as openresolv alpine 3.23 package has now been updated."
+   },
+   {
+    "date": "2026-01-22",
+    "desc": "Revert to Alpine 3.22 due to resolvconf bug."
+   }
+  ],
+  "config": {
+   "application_setup": "https://github.com/linuxserver/docker-wireguard?tab=readme-ov-file#application-setup",
+   "readonly_supported": true,
+   "env_vars": [
+    {
+     "name": "PUID",
+     "value": "1000",
+     "desc": "User ID",
+     "optional": false
+    },
+    {
+     "name": "PGID",
+     "value": "1000",
+     "desc": "Group ID",
+     "optional": false
+    },
+    {
+     "name": "TZ",
+     "value": "Etc/UTC",
+     "desc": "Timezone",
+     "optional": false
+    },
+    {
+     "name": "SERVERURL",
+     "value": "wireguard.domain.com",
+     "desc": "External IP or domain name for docker host. Used in server mode. If set to `auto`, the container will try to determine and set the external IP automatically",
+     "optional": true
+    },
+    {
+     "name": "SERVERPORT",
+     "value": "51820",
+     "desc": "External port for docker host. Used in server mode.",
+     "optional": true
+    },
+    {
+     "name": "PEERS",
+     "value": "1",
+     "desc": "Number of peers to create confs for. Required for server mode. Can also be a list of names: `myPC,myPhone,myTablet` (alphanumeric only)",
+     "optional": true
+    },
+    {
+     "name": "PEERDNS",
+     "value": "auto",
+     "desc": "DNS server set in peer/client configs (can be set as `8.8.8.8`). Used in server mode. Defaults to `auto`, which uses wireguard docker host's DNS via included CoreDNS forward.",
+     "optional": true
+    },
+    {
+     "name": "INTERNAL_SUBNET",
+     "value": "10.13.13.0",
+     "desc": "Internal subnet for the wireguard and server and peers (only change if it clashes). Used in server mode.",
+     "optional": true
+    },
+    {
+     "name": "ALLOWEDIPS",
+     "value": "0.0.0.0/0",
+     "desc": "The IPs/Ranges that the peers will be able to reach using the VPN connection. If not specified the default value is: '0.0.0.0/0, ::0/0' This will cause ALL traffic to route through the VPN, if you want split tunneling, set this to only the IPs you would like to use the tunnel AND the ip of the server's WG ip, such as 10.13.13.1.",
+     "optional": true
+    },
+    {
+     "name": "PERSISTENTKEEPALIVE_PEERS",
+     "value": "",
+     "desc": "Set to `all` or a list of comma separated peers (ie. `1,4,laptop`) for the wireguard server to send keepalive packets to listed peers every 25 seconds. Useful if server is accessed via domain name and has dynamic IP. Used only in server mode.",
+     "optional": true
+    },
+    {
+     "name": "LOG_CONFS",
+     "value": "true",
+     "desc": "Generated QR codes will be displayed in the docker log. Set to `false` to skip log output.",
+     "optional": true
+    }
+   ],
+   "volumes": [
+    {
+     "path": "/config",
+     "host_path": "/path/to/wireguard/config",
+     "desc": "Contains all relevant configuration files.",
+     "optional": false
+    },
+    {
+     "path": "/lib/modules",
+     "host_path": "/lib/modules",
+     "desc": "Path to host kernel module for situations where it's not already loaded.",
+     "optional": true
+    }
+   ],
+   "ports": [
+    {
+     "external": "51820",
+     "internal": "51820/udp",
+     "desc": "wireguard port",
+     "optional": false
+    }
+   ],
+   "custom": [
+    {
+     "name": "sysctl",
+     "name_compose": "sysctls",
+     "value": [
+      "net.ipv4.conf.all.src_valid_mark=1"
+     ],
+     "desc": "Required for client mode.",
+     "optional": false
+    }
+   ],
+   "caps": [
+    {
+     "cap_add": "NET_ADMIN",
+     "desc": "Neccessary for Wireguard to create its VPN interface.",
+     "optional": false
+    },
+    {
+     "cap_add": "SYS_MODULE",
+     "desc": "Neccessary for loading Wireguard kernel module if it's not already loaded.",
+     "optional": true
+    }
+   ]
+  }
+ },
+ {
+  "name": "readarr",
+  "initial_date": "2021-07-28",
+  "github_url": "https://github.com/linuxserver/docker-readarr",
+  "project_url": "https://github.com/Readarr/Readarr",
+  "project_logo": "https://raw.githubusercontent.com/linuxserver/docker-templates/master/linuxserver.io/img/readarr-logo.png",
+  "description": "readarr - Book Manager and Automation (Sonarr for Ebooks)",
+  "version": "latest",
+  "version_timestamp": "2025-06-27 14:12:20+00:00",
+  "category": "Books",
+  "stable": false,
+  "deprecated": true,
+  "stars": 127,
+  "monthly_pulls": 9806176,
+  "tags": [
+   {
+    "tag": "develop",
+    "desc": "Readarr releases from their develop branch"
+   },
+   {
+    "tag": "nightly",
+    "desc": "Readarr releases from their nightly branch"
+   }
+  ],
+  "architectures": [
+   {
+    "arch": "x86_64",
+    "tag": "amd64-latest"
+   },
+   {
+    "arch": "arm64",
+    "tag": "arm64v8-latest"
+   }
+  ],
+  "changelog": [
+   {
+    "date": "2025-06-27",
+    "desc": "Deprecate image."
+   },
+   {
+    "date": "2024-12-20",
+    "desc": "Rebase to Alpine 3.21."
+   },
+   {
+    "date": "2024-05-25",
+    "desc": "Rebase to Alpine 3.20."
+   }
+  ],
+  "config": {
+   "application_setup": "https://github.com/linuxserver/docker-readarr?tab=readme-ov-file#application-setup",
+   "readonly_supported": true,
+   "nonroot_supported": true,
+   "volumes": [
+    {
+     "path": "/config",
+     "host_path": "/path/to/readarr/data",
+     "desc": "Database and Readarr configs",
+     "optional": false
+    },
+    {
+     "path": "/books",
+     "host_path": "/path/to/books",
+     "desc": "Location of Book library on disk (See note in Application setup)",
+     "optional": true
+    },
+    {
+     "path": "/downloads",
+     "host_path": "/path/to/download-client-downloads",
+     "desc": "Location of download managers output directory (See note in Application setup)",
+     "optional": true
+    }
+   ],
+   "ports": [
+    {
+     "external": "8787",
+     "internal": "8787",
+     "desc": "The port for the Readarr web UI",
+     "optional": false
+    }
+   ]
+  }
+ },
+ {
+  "name": "webgrabplus",
+  "initial_date": "2018-01-18",
+  "github_url": "https://github.com/linuxserver/docker-webgrabplus",
+  "project_url": "https://www.webgrabplus.com",
+  "project_logo": "https://www.webgrabplus.com/sites/default/themes/WgTheme/images/slideshows/EPG_fading.jpg",
+  "description": "webgrabplus is a multi-site incremental xmltv epg grabber. It collects tv-program guide data from selected tvguide sites for your favourite channels.",
+  "version": "5.6.1-ls307",
+  "version_timestamp": "2026-10-22 14:08:36+00:00",
+  "category": "Media Tools",
+  "stable": true,
+  "deprecated": false,
+  "stars": 32,
+  "monthly_pulls": 11203,
+  "tags": [
+   {
+    "tag": "latest",
+    "desc": "Stable releases"
+   }
+  ],
+  "architectures": [
+   {
+    "arch": "x86_64",
+    "tag": "amd64-latest"
+   },
+   {
+    "arch": "arm64",
+    "tag": "arm64v8-latest"
+   }
+  ],
+  "changelog": [
+   {
+    "date": "2025-09-14",
+    "desc": "Rebase to Alpine 3.22, upgrade dotnet to 9.0."
+   },
+   {
+    "date": "2024-06-25",
+    "desc": "Rebase to Alpine 3.21."
+   },
+   {
+    "date": "2024-06-25",
+    "desc": "Rebase to Alpine 3.20."
+   }
+  ],
+  "config": {
+   "application_setup": "https://github.com/linuxserver/docker-webgrabplus?tab=readme-ov-file#application-setup",
+   "readonly_supported": false,
+   "nonroot_supported": false,
+   "hostname": {
+    "hostname": "webgrabplus",
+    "desc": "Set the hostname for the container for the license check.",
+    "optional": false
+   },
+   "mac_address": {
+    "mac_address": "00:00:00:00:00:00",
+    "desc": "Set the mac_address for the container for the license check.",
+    "optional": false
+   },
+   "env_vars": [
+    {
+     "name": "PUID",
+     "value": "1000",
+     "desc": "User ID",
+     "optional": false
+    },
+    {
+     "name": "PGID",
+     "value": "1000",
+     "desc": "Group ID",
+     "optional": false
+    },
+    {
+     "name": "TZ",
+     "value": "Etc/UTC",
+     "desc": "Timezone",
+     "optional": false
+    }
+   ],
+   "volumes": [
+    {
+     "path": "/config",
+     "host_path": "/path/to/webgrabplus/config",
+     "desc": "Persistent config files",
+     "optional": false
+    },
+    {
+     "path": "/data",
+     "host_path": "/path/to/data",
+     "desc": "Where webgrabplus should store it's data files.",
+     "optional": false
+    }
+   ]
+  }
+ },
+ {
+  "name": "kasm",
+  "initial_date": "2022-07-02",
+  "github_url": "https://github.com/linuxserver/docker-kasm",
+  "project_url": "https://www.kasmweb.com/?utm_campaign=LinuxServer&utm_source=listing",
+  "project_logo": "https://kasm-ci.s3.amazonaws.com/kasm_wide.png",
+  "description": "kasm Workspaces is a docker container streaming platform for delivering browser-based access to desktops, applications, and web services. Kasm uses devops-enabled Containerized Desktop Infrastructure (CDI) to create on-demand, disposable, docker containers that are accessible via web browser. Example use-cases include Remote Browser Isolation (RBI), Data Loss Prevention (DLP), Desktop as a Service (DaaS), Secure Remote Access Services (RAS), and Open Source Intelligence (OSINT) collections.  The rendering of the graphical-based containers is powered by the open-source project [KasmVNC](https://www.kasmweb.com/kasmvnc.html?utm_campaign=LinuxServer&utm_source=kasmvnc).",
+  "version": "1.19.0-ls154",
+  "version_timestamp": "2026-10-21 00:35:25+00:00",
+  "category": "Remote Desktop,Business",
+  "stable": true,
+  "deprecated": false,
+  "stars": 493,
+  "monthly_pulls": 229627,
+  "tags": [
+   {
+    "tag": "latest",
+    "desc": "Stable releases"
+   }
+  ],
+  "architectures": [
+   {
+    "arch": "x86_64",
+    "tag": "amd64-latest"
+   },
+   {
+    "arch": "arm64",
+    "tag": "arm64v8-latest"
+   }
+  ],
+  "changelog": [
+   {
+    "date": "2026-08-07",
+    "desc": "Fix NVIDIA passthrough to Workspace containers by generating a CDI specification inside the DinD layer."
+   },
+   {
+    "date": "2026-08-04",
+    "desc": "Give kasm_manager a healthcheck start period so a cold start does not leave kasm_proxy created but never started."
+   },
+   {
+    "date": "2026-04-16",
+    "desc": "Update for 1.18.1 release. Use rolling service images. Bump docker to v29."
+   }
+  ],
+  "config": {
+   "application_setup": "https://github.com/linuxserver/docker-kasm?tab=readme-ov-file#application-setup",
+   "privileged": true,
+   "env_vars": [
+    {
+     "name": "KASM_PORT",
+     "value": "443",
+     "desc": "Specify the port you bind to the outside for Kasm Workspaces.",
+     "optional": false
+    },
+    {
+     "name": "DOCKER_HUB_USERNAME",
+     "value": "USER",
+     "desc": "Optionally specify a DockerHub Username to pull private images.",
+     "optional": true
+    },
+    {
+     "name": "DOCKER_HUB_PASSWORD",
+     "value": "PASS",
+     "desc": "Optionally specify a DockerHub password to pull private images.",
+     "optional": true
+    },
+    {
+     "name": "DOCKER_MTU",
+     "value": "1500",
+     "desc": "Optionally specify the mtu options passed to dockerd.",
+     "optional": true
+    }
+   ],
+   "volumes": [
+    {
+     "path": "/opt",
+     "host_path": "/path/to/kasm/data",
+     "desc": "Docker and installation storage.",
+     "optional": false
+    },
+    {
+     "path": "/profiles",
+     "host_path": "/path/to/kasm/profiles",
+     "desc": "Optionally specify a path for persistent profile storage.",
+     "optional": true
+    },
+    {
+     "path": "/dev/input",
+     "host_path": "/dev/input",
+     "desc": "Optional for gamepad support.",
+     "optional": true
+    },
+    {
+     "path": "/run/udev/data",
+     "host_path": "/run/udev/data",
+     "desc": "Optional for gamepad support.",
+     "optional": true
+    }
+   ],
+   "ports": [
+    {
+     "external": "3000",
+     "internal": "3000",
+     "desc": "Kasm Installation wizard. (https)",
+     "optional": false
+    },
+    {
+     "external": "443",
+     "internal": "443",
+     "desc": "Kasm Workspaces interface. (https)",
+     "optional": false
+    }
+   ],
+   "custom": [
+    {
+     "name": "stop-timeout",
+     "name_compose": "stop_grace_period",
+     "value": "90s",
+     "desc": "Increase container shutdown delay to give Kasm services time to stop cleanly.",
+     "optional": true
+    }
+   ],
+   "security_opt": [
+    {
+     "run_var": "apparmor=rootlesskit",
+     "compose_var": "apparmor:rootlesskit",
+     "desc": "Some hosts require this on top of privileged for namespacing to work properly inside the DinD layer.",
+     "optional": true
+    }
+   ]
+  }
+ },
+ {
+  "name": "wireshark",
+  "initial_date": "2020-03-31",
+  "github_url": "https://github.com/linuxserver/docker-wireshark",
+  "project_url": "https://www.wireshark.org/",
+  "project_logo": "https://raw.githubusercontent.com/linuxserver/docker-templates/master/linuxserver.io/img/wireshark-icon.png",
+  "description": "[Wireshark] is the world\u2019s foremost and widely-used network protocol analyzer. It lets you see what\u2019s happening on your network at a microscopic level and is the de facto (and often de jure) standard across many commercial and non-profit enterprises, government agencies, and educational institutions. Wireshark development thrives thanks to the volunteer contributions of networking experts around the globe and is the continuation of a project started by Gerald Combs in 1998.",
+  "version": "4.6.6-r0-ls329",
+  "version_timestamp": "2026-10-19 21:13:53+00:00",
+  "category": "Network",
+  "stable": true,
+  "deprecated": false,
+  "stars": 168,
+  "monthly_pulls": 45164,
+  "tags": [
+   {
+    "tag": "latest",
+    "desc": "Stable releases"
+   }
+  ],
+  "architectures": [
+   {
+    "arch": "x86_64",
+    "tag": "latest"
+   },
+   {
+    "arch": "arm64",
+    "tag": "arm64v8-latest"
+   }
+  ],
+  "changelog": [
+   {
+    "date": "2026-06-10",
+    "desc": "Rebase to Alpine 3.24."
+   },
+   {
+    "date": "2026-04-04",
+    "desc": "Make Wayland default disable with PIXELFLUX_WAYLAND=false."
+   },
+   {
+    "date": "2025-12-28",
+    "desc": "Add Wayland init logic, rebase to Alpine 3.23."
+   }
+  ],
+  "config": {
+   "application_setup": "https://github.com/linuxserver/docker-wireshark?tab=readme-ov-file#application-setup",
+   "networking": "host",
+   "env_vars": [
+    {
+     "name": "PUID",
+     "value": "1000",
+     "desc": "User ID",
+     "optional": false
+    },
+    {
+     "name": "PGID",
+     "value": "1000",
+     "desc": "Group ID",
+     "optional": false
+    },
+    {
+     "name": "TZ",
+     "value": "Etc/UTC",
+     "desc": "Timezone",
+     "optional": false
+    }
+   ],
+   "volumes": [
+    {
+     "path": "/config",
+     "host_path": "/path/to/wireshark/config",
+     "desc": "Users home directory in the container, stores program settings and potentially dump files.",
+     "optional": false
+    }
+   ],
+   "ports": [
+    {
+     "external": "3000",
+     "internal": "3000",
+     "desc": "WireShark desktop gui HTTPS, must be proxied.",
+     "optional": true
+    },
+    {
+     "external": "3001",
+     "internal": "3001",
+     "desc": "WireShark desktop gui HTTPS, only use this if you are not using host mode and sniffing Docker network traffic.",
+     "optional": true
+    }
+   ],
+   "custom": [
+    {
+     "name": "shm-size",
+     "name_compose": "shm_size",
+     "value": "1gb",
+     "desc": "Recommended for all desktop images.",
+     "optional": false
+    }
+   ],
+   "caps": [
+    {
+     "cap_add": "NET_ADMIN",
+     "desc": "Required to allow packet capture.",
+     "optional": false
+    }
+   ]
+  }
+ },
+ {
+  "name": "openssh-server",
+  "initial_date": "2019-10-17",
+  "github_url": "https://github.com/linuxserver/docker-openssh-server",
+  "project_url": "https://www.openssh.com/",
+  "project_logo": "https://raw.githubusercontent.com/linuxserver/docker-templates/master/linuxserver.io/img/openssh-server-logo.png",
+  "description": "openssh-server is a sandboxed environment that allows ssh access without giving keys to the entire server. Giving ssh access via private key often means giving full access to the server. This container creates a limited and sandboxed environment that others can ssh into. The users only have access to the folders mapped and the processes running inside this container.",
+  "version": "10.3_p1-r1-ls239",
+  "version_timestamp": "2026-10-11 22:38:27+00:00",
+  "category": "Administration",
+  "stable": true,
+  "deprecated": false,
+  "stars": 613,
+  "monthly_pulls": 492306,
+  "tags": [
+   {
+    "tag": "latest",
+    "desc": "Stable releases"
+   }
+  ],
+  "architectures": [
+   {
+    "arch": "x86_64",
+    "tag": "amd64-latest"
+   },
+   {
+    "arch": "arm64",
+    "tag": "arm64v8-latest"
+   }
+  ],
+  "changelog": [
+   {
+    "date": "2026-07-05",
+    "desc": "Rebase to Alpine 3.24."
+   },
+   {
+    "date": "2025-12-28",
+    "desc": "Rebase to Alpine 3.23."
+   },
+   {
+    "date": "2025-07-05",
+    "desc": "Rebase to Alpine 3.22."
+   }
+  ],
+  "config": {
+   "application_setup": "https://github.com/linuxserver/docker-openssh-server?tab=readme-ov-file#application-setup",
+   "readonly_supported": false,
+   "nonroot_supported": false,
+   "hostname": {
+    "hostname": "openssh-server",
+    "desc": "Optionally the hostname can be defined.",
+    "optional": true
+   },
+   "env_vars": [
+    {
+     "name": "PUID",
+     "value": "1000",
+     "desc": "User ID",
+     "optional": false
+    },
+    {
+     "name": "PGID",
+     "value": "1000",
+     "desc": "Group ID",
+     "optional": false
+    },
+    {
+     "name": "TZ",
+     "value": "Etc/UTC",
+     "desc": "Timezone",
+     "optional": false
+    },
+    {
+     "name": "PUBLIC_KEY",
+     "value": "yourpublickey",
+     "desc": "Optional ssh public key, which will automatically be added to authorized_keys.",
+     "optional": true
+    },
+    {
+     "name": "PUBLIC_KEY_FILE",
+     "value": "/path/to/file",
+     "desc": "Optionally specify a file containing the public key (works with docker secrets).",
+     "optional": true
+    },
+    {
+     "name": "PUBLIC_KEY_DIR",
+     "value": "/path/to/directory/containing/_only_/pubkeys",
+     "desc": "Optionally specify a directory containing the public keys (works with docker secrets).",
+     "optional": true
+    },
+    {
+     "name": "PUBLIC_KEY_URL",
+     "value": "https://github.com/username.keys",
+     "desc": "Optionally specify a URL containing the public key.",
+     "optional": true
+    },
+    {
+     "name": "SUDO_ACCESS",
+     "value": "false",
+     "desc": "Set to `true` to allow `linuxserver.io`, the ssh user, sudo access. Without `USER_PASSWORD` set, this will allow passwordless sudo access.",
+     "optional": true
+    },
+    {
+     "name": "PASSWORD_ACCESS",
+     "value": "false",
+     "desc": "Set to `true` to allow user/password ssh access. You will want to set `USER_PASSWORD` or `USER_PASSWORD_FILE` as well.",
+     "optional": true
+    },
+    {
+     "name": "USER_PASSWORD",
+     "value": "password",
+     "desc": "Optionally set a sudo password for `linuxserver.io`, the ssh user. If this or `USER_PASSWORD_FILE` are not set but `SUDO_ACCESS` is set to true, the user will have passwordless sudo access.",
+     "optional": true
+    },
+    {
+     "name": "USER_PASSWORD_FILE",
+     "value": "/path/to/file",
+     "desc": "Optionally specify a file that contains the password. This setting supersedes the `USER_PASSWORD` option (works with docker secrets).",
+     "optional": true
+    },
+    {
+     "name": "USER_NAME",
+     "value": "linuxserver.io",
+     "desc": "Optionally specify a user name (Default:`linuxserver.io`)",
+     "optional": true
+    },
+    {
+     "name": "LOG_STDOUT",
+     "value": "",
+     "desc": "Set to `true` to log to stdout instead of file.",
+     "optional": true
+    }
+   ],
+   "volumes": [
+    {
+     "path": "/config",
+     "host_path": "/path/to/openssh-server/config",
+     "desc": "Contains all relevant configuration files.",
+     "optional": false
+    }
+   ],
+   "ports": [
+    {
+     "external": "2222",
+     "internal": "2222",
+     "desc": "ssh port",
+     "optional": false
+    }
+   ]
+  }
+ },
+ {
+  "name": "duplicati",
+  "initial_date": "2017-04-24",
+  "github_url": "https://github.com/linuxserver/docker-duplicati",
+  "project_url": "https://www.duplicati.com/",
+  "project_logo": "https://github.com/linuxserver/docker-templates/raw/master/linuxserver.io/img/duplicati-icon.png",
+  "description": "duplicati is a backup client that securely stores encrypted, incremental, compressed backups on local storage, cloud storage services and remote file servers. It works with standard protocols like FTP, SSH, WebDAV as well as popular services like Microsoft OneDrive, Amazon S3, Google Drive, box.com, Mega, B2, and many others.",
+  "version": "v2.4.0.1_stable_2026-10-07-ls315",
+  "version_timestamp": "2026-10-24 08:48:28+00:00",
+  "category": "Backup",
+  "stable": true,
+  "deprecated": false,
+  "stars": 447,
+  "monthly_pulls": 2983369,
+  "tags": [
+   {
+    "tag": "latest",
+    "desc": "Stable releases of Duplicati"
+   },
+   {
+    "tag": "development",
+    "desc": "Beta releases of Duplicati"
+   }
+  ],
+  "architectures": [
+   {
+    "arch": "x86_64",
+    "tag": "amd64-latest"
+   },
+   {
+    "arch": "arm64",
+    "tag": "arm64v8-latest"
+   }
+  ],
+  "changelog": [
+   {
+    "date": "2026-09-03",
+    "desc": "Make sure /config is only accessible by the PUID user."
+   },
+   {
+    "date": "2025-01-31",
+    "desc": "Make `latest` stable releases, move beta releases to `development`."
+   },
+   {
+    "date": "2025-01-28",
+    "desc": "Add xz-utils."
+   }
+  ],
+  "config": {
+   "application_setup": "https://github.com/linuxserver/docker-duplicati?tab=readme-ov-file#application-setup",
+   "env_vars": [
+    {
+     "name": "PUID",
+     "value": "1000",
+     "desc": "User ID",
+     "optional": false
+    },
+    {
+     "name": "PGID",
+     "value": "1000",
+     "desc": "Group ID",
+     "optional": false
+    },
+    {
+     "name": "TZ",
+     "value": "Etc/UTC",
+     "desc": "Timezone",
+     "optional": false
+    },
+    {
+     "name": "SETTINGS_ENCRYPTION_KEY",
+     "value": "",
+     "desc": "Encryption key for settings database. Minimum 8 characters, alphanumeric.",
+     "optional": false
+    },
+    {
+     "name": "CLI_ARGS",
+     "value": "",
+     "desc": "Optionally specify any [CLI variables](https://duplicati.readthedocs.io/en/latest/07-other-command-line-utilities/) you want to launch the app with",
+     "optional": true
+    },
+    {
+     "name": "DUPLICATI__WEBSERVICE_PASSWORD",
+     "value": "",
+     "desc": "Password for the webui. If left unset will default to `changeme` and can be changed from the webui settings.",
+     "optional": true
+    }
+   ],
+   "volumes": [
+    {
+     "path": "/config",
+     "host_path": "/path/to/duplicati/config",
+     "desc": "Contains all relevant configuration files.",
+     "optional": false
+    },
+    {
+     "path": "/backups",
+     "host_path": "/path/to/backups",
+     "desc": "Path to store local backups.",
+     "optional": false
+    },
+    {
+     "path": "/source",
+     "host_path": "/path/to/source",
+     "desc": "Path to source for files to backup.",
+     "optional": false
+    }
+   ],
+   "ports": [
+    {
+     "external": "8200",
+     "internal": "8200",
+     "desc": "http gui",
+     "optional": false
+    }
+   ]
+  }
+ },
+ {
+  "name": "steamos",
+  "initial_date": "2023-07-04",
+  "github_url": "https://github.com/linuxserver/docker-steamos",
+  "project_url": "https://www.steamdeck.com/",
+  "project_logo": "https://raw.githubusercontent.com/linuxserver/docker-templates/master/linuxserver.io/img/steamos-logo.png",
+  "description": "[SteamOS] is an Arch based Linux distribution made by Valve Software. This container is a vanilla Arch install with Steam repositories added for software support. **This container will only work with modern AMD/Intel GPUs on a real Linux Host**",
+  "version": "2025-07-12-ls96",
+  "version_timestamp": "2025-12-13 16:36:08+00:00",
+  "category": "Games",
+  "stable": true,
+  "deprecated": true,
+  "stars": 198,
+  "monthly_pulls": 3811,
+  "tags": [
+   {
+    "tag": "latest",
+    "desc": "Stable releases"
+   }
+  ],
+  "architectures": [
+   {
+    "arch": "x86_64",
+    "tag": "latest"
+   }
+  ],
+  "changelog": [
+   {
+    "date": "2025-12-09",
+    "desc": "Deprecate container, any future release will be for the Steam application not the underlying OS."
+   },
+   {
+    "date": "2024-05-23",
+    "desc": "Document how to get Nvidia to work."
+   },
+   {
+    "date": "2024-01-15",
+    "desc": "Install gperftools to fix source games."
+   }
+  ],
+  "config": {
+   "application_setup": "https://github.com/linuxserver/docker-steamos?tab=readme-ov-file#application-setup",
+   "hostname": {
+    "hostname": "hostname",
+    "desc": "Specify the hostname of the host, this is useful for keeping a persistent hostname between upgrades and identifying the server in the remote play Steam Client.",
+    "optional": true
+   },
+   "env_vars": [
+    {
+     "name": "PUID",
+     "value": "1000",
+     "desc": "User ID",
+     "optional": false
+    },
+    {
+     "name": "PGID",
+     "value": "1000",
+     "desc": "Group ID",
+     "optional": false
+    },
+    {
+     "name": "TZ",
+     "value": "Etc/UTC",
+     "desc": "Timezone",
+     "optional": false
+    },
+    {
+     "name": "TZ",
+     "value": "Europe/London",
+     "desc": "Specify a timezone to use EG Europe/London.",
+     "optional": false
+    },
+    {
+     "name": "DRINODE",
+     "value": "/dev/dri/renderD128",
+     "desc": "Specify the render device (GPU) for the contianer to use.",
+     "optional": false
+    },
+    {
+     "name": "HOST_IP",
+     "value": "192.168.100.10",
+     "desc": "Specify the IP of the host, needed for LAN Remote Play.",
+     "optional": true
+    },
+    {
+     "name": "STARTUP",
+     "value": "KDE",
+     "desc": "KDE to boot into desktop mode, BIGPICTURE to boot into gamescope.",
+     "optional": true
+    },
+    {
+     "name": "RESOLUTION",
+     "value": "1920x1080",
+     "desc": "When booting into BIGPICTURE mode the screen resolution will be bound to this value.",
+     "optional": true
+    }
+   ],
+   "volumes": [
+    {
+     "path": "/config",
+     "host_path": "/path/to/config",
+     "desc": "Users home directory in the container, stores all files and games.",
+     "optional": false
+    },
+    {
+     "path": "/dev/input",
+     "host_path": "/dev/input",
+     "desc": "Optional for gamepad support. *Only working for Steam Remote Play",
+     "optional": true
+    },
+    {
+     "path": "/run/udev/data",
+     "host_path": "/run/udev/data",
+     "desc": "Optional for gamepad support. *Only working for Steam Remote Play",
+     "optional": true
+    }
+   ],
+   "ports": [
+    {
+     "external": "3000",
+     "internal": "3000",
+     "desc": "SteamOS desktop gui.",
+     "optional": false
+    },
+    {
+     "external": "3001",
+     "internal": "3001",
+     "desc": "HTTPS SteamOS desktop gui.",
+     "optional": false
+    },
+    {
+     "external": "27031-27036",
+     "internal": "27031-27036/udp",
+     "desc": "Steam Remote Play Ports (UDP).",
+     "optional": true
+    },
+    {
+     "external": "27031-27036",
+     "internal": "27031-27036",
+     "desc": "Steam Remote Play Ports (TCP).",
+     "optional": true
+    },
+    {
+     "external": "47984-47990",
+     "internal": "47984-47990",
+     "desc": "Sunshine Ports (TCP).",
+     "optional": true
+    },
+    {
+     "external": "48010-48010",
+     "internal": "48010-48010",
+     "desc": "Sunshine Ports (TCP).",
+     "optional": true
+    },
+    {
+     "external": "47998-48000",
+     "internal": "47998-48000/udp",
+     "desc": "Sunshine Ports (UDP).",
+     "optional": true
+    }
+   ],
+   "custom": [
+    {
+     "name": "shm-size",
+     "name_compose": "shm_size",
+     "value": "1gb",
+     "desc": "This is needed for the steam browser to function properly.",
+     "optional": false
+    }
+   ],
+   "security_opt": [
+    {
+     "run_var": "seccomp=unconfined",
+     "compose_var": "seccomp:unconfined",
+     "desc": "This is needed to allow kernel syscalls made by Steam.",
+     "optional": false
+    },
+    {
+     "run_var": "apparmor=unconfined",
+     "compose_var": "apparmor:unconfined",
+     "desc": "For Debian/Ubuntu hosts Steam needs elevated perms that AppArmor blocks.",
+     "optional": true
+    }
+   ],
+   "devices": [
+    {
+     "path": "/dev/dri",
+     "host_path": "/dev/dri",
+     "desc": "Video card passthrough to Steam.",
+     "optional": false
+    }
+   ],
+   "caps": [
+    {
+     "cap_add": "NET_ADMIN",
+     "desc": "",
+     "optional": false
+    }
+   ]
+  }
+ },
+ {
+  "name": "pydio-cells",
+  "initial_date": "2019-12-12",
+  "github_url": "https://github.com/linuxserver/docker-pydio-cells",
+  "project_url": "https://pydio.com/",
+  "project_logo": "https://raw.githubusercontent.com/linuxserver/docker-templates/master/linuxserver.io/img/pydio-cells-icon.png",
+  "description": "pydio-cells is the nextgen file sharing platform for organizations. It is a full rewrite of the Pydio project using the Go language following a micro-service architecture.",
+  "version": "v5.1.0-ls214",
+  "version_timestamp": "2026-10-22 08:54:00+00:00",
+  "category": "File Sharing",
+  "stable": true,
+  "deprecated": false,
+  "stars": 21,
+  "monthly_pulls": 2583,
+  "tags": [
+   {
+    "tag": "latest",
+    "desc": "Stable releases"
+   }
+  ],
+  "architectures": [
+   {
+    "arch": "x86_64",
+    "tag": "amd64-latest"
+   },
+   {
+    "arch": "arm64",
+    "tag": "arm64v8-latest"
+   }
+  ],
+  "changelog": [
+   {
+    "date": "2026-07-17",
+    "desc": "Rebasing to Alpine 3.24."
+   },
+   {
+    "date": "2025-07-27",
+    "desc": "Rebasing to Alpine 3.22."
+   },
+   {
+    "date": "2024-06-27",
+    "desc": "Rebasing to Alpine 3.20."
+   }
+  ],
+  "config": {
+   "application_setup": "https://github.com/linuxserver/docker-pydio-cells?tab=readme-ov-file#application-setup",
+   "hostname": {
+    "hostname": "pydio-cells",
+    "desc": "Pydio Cells uses the hostname to verify local files. This setting is required and should not be changed after it has been set.",
+    "optional": false
+   },
+   "env_vars": [
+    {
+     "name": "PUID",
+     "value": "1000",
+     "desc": "User ID",
+     "optional": false
+    },
+    {
+     "name": "PGID",
+     "value": "1000",
+     "desc": "Group ID",
+     "optional": false
+    },
+    {
+     "name": "TZ",
+     "value": "Etc/UTC",
+     "desc": "Timezone",
+     "optional": false
+    },
+    {
+     "name": "EXTERNALURL",
+     "value": "yourdomain.url",
+     "desc": "The external url you would like to use to access Pydio Cells (Can be https://domain.url or https://IP:PORT).",
+     "optional": false
+    },
+    {
+     "name": "SERVER_IP",
+     "value": "0.0.0.0",
+     "desc": "Enter the LAN IP of the docker server. Required for local access by IP, added to self signed cert as SAN (not required if accessing only through reverse proxy).",
+     "optional": true
+    }
+   ],
+   "volumes": [
+    {
+     "path": "/config",
+     "host_path": "/path/to/pydio-cells/config",
+     "desc": "All the config files reside here.",
+     "optional": false
+    }
+   ],
+   "ports": [
+    {
+     "external": "8080",
+     "internal": "8080",
+     "desc": "Http port",
+     "optional": false
+    }
+   ]
+  }
+ },
+ {
+  "name": "swag",
+  "initial_date": "2020-08-03",
+  "github_url": "https://github.com/linuxserver/docker-swag",
+  "project_url": "https://linuxserver.io",
+  "project_logo": "https://github.com/linuxserver/docker-templates/raw/master/linuxserver.io/img/swag.gif",
+  "description": "SWAG - Secure Web Application Gateway (formerly known as letsencrypt, no relation to Let's Encrypt\u2122) sets up an Nginx webserver and reverse proxy with php support and a built-in certbot client that automates free SSL server certificate generation and renewal processes (Let's Encrypt and ZeroSSL). It also contains fail2ban for intrusion prevention.",
+  "version": "5.8.0-ls495",
+  "version_timestamp": "2026-10-24 11:57:46+00:00",
+  "category": "Reverse Proxy",
+  "stable": true,
+  "deprecated": false,
+  "stars": 3748,
+  "monthly_pulls": 623348,
+  "tags": [
+   {
+    "tag": "latest",
+    "desc": "Stable releases"
+   }
+  ],
+  "architectures": [
+   {
+    "arch": "x86_64",
+    "tag": "amd64-latest"
+   },
+   {
+    "arch": "arm64",
+    "tag": "arm64v8-latest"
+   }
+  ],
+  "changelog": [
+   {
+    "date": "2026-10-20",
+    "desc": "[Existing users should update:](https://github.com/linuxserver/docker-swag/blob/master/README.md#updating-configs) proxy.conf, authelia-server.conf, authentik-server.conf, tinyauth-server.conf - Update Nginx configuration to replace $http_host with $host$is_request_port$request_port for better compatibility."
+   },
+   {
+    "date": "2026-09-09",
+    "desc": "Use new X-Tinyauth-Location header in Tinyauth locations and remove duplicate auth module headers."
+   },
+   {
+    "date": "2026-07-19",
+    "desc": "Rebase to Alpine 3.24 with PHP 8.5."
+   }
+  ],
+  "config": {
+   "application_setup": "https://github.com/linuxserver/docker-swag?tab=readme-ov-file#application-setup",
+   "readonly_supported": true,
+   "env_vars": [
+    {
+     "name": "PUID",
+     "value": "1000",
+     "desc": "User ID",
+     "optional": false
+    },
+    {
+     "name": "PGID",
+     "value": "1000",
+     "desc": "Group ID",
+     "optional": false
+    },
+    {
+     "name": "TZ",
+     "value": "Etc/UTC",
+     "desc": "Timezone",
+     "optional": false
+    },
+    {
+     "name": "URL",
+     "value": "example.com",
+     "desc": "Top url you have control over (e.g. `example.com` if you own it, or `customsubdomain.example.com` if dynamic dns).",
+     "optional": false
+    },
+    {
+     "name": "VALIDATION",
+     "value": "http",
+     "desc": "Certbot validation method to use, options are `http` or `dns` (`dns` method also requires `DNSPLUGIN` variable set).",
+     "optional": false
+    },
+    {
+     "name": "SUBDOMAINS",
+     "value": "www,",
+     "desc": "Subdomains you'd like the cert to cover (comma separated, no spaces) ie. `www,ftp,cloud`. For a wildcard cert, set this *exactly* to `wildcard` (wildcard cert is available via `dns` validation only)",
+     "optional": true
+    },
+    {
+     "name": "CERTPROVIDER",
+     "value": "",
+     "desc": "Optionally define the cert provider. Set to `zerossl` for ZeroSSL certs (requires existing [ZeroSSL account](https://app.zerossl.com/signup) and the e-mail address entered in `EMAIL` env var). Otherwise defaults to Let's Encrypt.",
+     "optional": true
+    },
+    {
+     "name": "CERT_PROFILE",
+     "value": "",
+     "desc": "Optionally define a cert profile to use for cert generation. This is useful if you want to use a custom cert profile instead of the default one. Currently only supported for Let's Encrypt. See https://letsencrypt.org/docs/profiles/ ",
+     "optional": true
+    },
+    {
+     "name": "DNSPLUGIN",
+     "value": "cloudflare",
+     "desc": "Required if `VALIDATION` is set to `dns`. Options are `acmedns`, `aliyun`, `azure`, `bunny`, `cloudflare`, `cpanel`, `desec`, `digitalocean`, `directadmin`, `dnsimple`, `dnsmadeeasy`, `dnspod`, `do`, `domeneshop`, `dreamhost`, `duckdns`, `dynu`, `freedns`, `gandi`, `gehirn`, `glesys`, `godaddy`, `google`, `he`, `hetzner`, `hetzner-cloud`, `infomaniak`, `inwx`, `ionos`, `linode`, `loopia`, `luadns`, `mijn-host`, `namecheap`, `netcup`, `njalla`, `nsone`, `ovh`, `porkbun`, `rfc2136`, `route53`, `sakuracloud`, `standalone`, `transip`, and `vultr`. Also need to enter the credentials into the corresponding ini (or json for some plugins) file under `/config/dns-conf`.",
+     "optional": true
+    },
+    {
+     "name": "PROPAGATION",
+     "value": "",
+     "desc": "Optionally override (in seconds) the default propagation time for the dns plugins.",
+     "optional": true
+    },
+    {
+     "name": "EMAIL",
+     "value": "",
+     "desc": "Optional e-mail address used for cert expiration notifications (Required for ZeroSSL).",
+     "optional": true
+    },
+    {
+     "name": "ONLY_SUBDOMAINS",
+     "value": "false",
+     "desc": "If you wish to get certs only for certain subdomains, but not the main domain (main domain may be hosted on another machine and cannot be validated), set this to `true`",
+     "optional": true
+    },
+    {
+     "name": "EXTRA_DOMAINS",
+     "value": "",
+     "desc": "Additional fully qualified domain names (comma separated, no spaces) ie. `example.net,subdomain.example.net,*.example.org`",
+     "optional": true
+    },
+    {
+     "name": "STAGING",
+     "value": "false",
+     "desc": "Set to `true` to retrieve certs in staging mode. Rate limits will be much higher, but the resulting cert will not pass the browser's security test. Only to be used for testing purposes.",
+     "optional": true
+    },
+    {
+     "name": "DISABLE_F2B",
+     "value": "",
+     "desc": "Set to `true` to disable the Fail2ban service in the container, if you're already running it elsewhere or using a different IPS.",
+     "optional": true
+    },
+    {
+     "name": "SWAG_AUTORELOAD",
+     "value": "",
+     "desc": "Set to `true` to enable automatic reloading of confs on change without stopping/restarting nginx. Your filesystem must support inotify. This functionality was previously offered [via mod](https://github.com/linuxserver/docker-mods/tree/swag-auto-reload).",
+     "optional": true
+    },
+    {
+     "name": "SWAG_AUTORELOAD_WATCHLIST",
+     "value": "",
+     "desc": "A [pipe](https://en.wikipedia.org/wiki/Vertical_bar)-separated list of additional folders for auto reload to watch in addition to `/config/nginx`",
+     "optional": true
+    }
+   ],
+   "volumes": [
+    {
+     "path": "/config",
+     "host_path": "/path/to/swag/config",
+     "desc": "Persistent config files",
+     "optional": false
+    }
+   ],
+   "ports": [
+    {
+     "external": "443",
+     "internal": "443",
+     "desc": "HTTPS port",
+     "optional": false
+    },
+    {
+     "external": "80",
+     "internal": "80",
+     "desc": "HTTP port (required for HTTP validation and HTTP -> HTTPS redirect)",
+     "optional": true
+    },
+    {
+     "external": "443",
+     "internal": "443/udp",
+     "desc": "QUIC (HTTP/3) port. Must be enabled in the default and proxy confs.",
+     "optional": true
+    }
+   ],
+   "caps": [
+    {
+     "cap_add": "NET_ADMIN",
+     "desc": "Required for fail2Ban to be able to modify iptables rules.",
+     "optional": false
+    }
+   ]
+  }
+ }
+]
