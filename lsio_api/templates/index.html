@@ -38,11 +38,7 @@
 <div class="container">
   <section aria-label="At a glance" class="stats">
     {{ stat_tile('Images', stats.images, 'images') }}
-    {% if stats.monthly_pulls %}
-    {{ stat_tile('Monthly pulls', stats.monthly_pulls, 'pulls in the last month', short=True) }}
-    {% else %}
-    {{ stat_tile('Docker Hub pulls', stats.docker_hub_pulls, 'pulls from Docker Hub', short=True) }}
-    {% endif %}
+    {{ stat_tile(*pulls, short=True) }}
     {{ stat_tile('Categories', stats.categories, 'categories') }}
     {{ stat_tile('On arm64', stats.architectures.get('arm64', 0), 'images for arm64') }}
   </section>
@@ -80,13 +76,7 @@
           <table>
             <thead><tr><th scope="col">Fields</th><th scope="col">Source</th></tr></thead>
             <tbody>
-              {% for fields, source, href in [
-                ('Image list, description, tags, architectures, changelog, config', 'readme-vars.yml in each docker-* repository', 'https://github.com/linuxserver'),
-                ('version, version_timestamp, release_url', 'Latest stable GitHub release', 'https://docs.github.com/en/repositories/releasing-projects-on-github'),
-                ('stars, archived', 'GitHub repository', 'https://github.com/linuxserver'),
-                ('monthly_pulls', 'Scarf, which serves lscr.io', 'https://about.scarf.sh/'),
-                ('docker_hub_pulls', 'Docker Hub', 'https://hub.docker.com/u/linuxserver'),
-              ] %}
+              {% for fields, source, href in data_sources %}
               <tr><td><code>{{ fields }}</code></td><td>{{ external(href, source) }}</td></tr>
               {% endfor %}
             </tbody>

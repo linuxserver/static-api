@@ -7,9 +7,10 @@ types the models expect, and this also produces the extra fields ImageDetail add
 
 import datetime
 import logging
-from collections.abc import Callable, Iterable
+from collections.abc import Callable
 from typing import Any
 
+from .dates import python_timestamp
 from .models import (
     Architecture,
     Cap,
@@ -28,7 +29,7 @@ from .models import (
     Tag,
     Volume,
 )
-from .readme_vars import ReadmeVars, api_substitutions, parse_readme_vars, readme_substitutions
+from .readme_vars import ReadmeVars, parse_api_vars, parse_readme_vars
 from .snapshot import RepoSnapshot, is_image_repo
 from .snippets import REGISTRY, docker_compose, docker_run
 
@@ -70,17 +71,6 @@ def _paired[T](
 
 # ---------------------------------------------------------------------------------------------------
 # Dates
-
-
-def python_timestamp(iso: str | None) -> str:
-    """ "2026-10-24T11:25:58.123Z" -> "2026-10-24 11:25:58+00:00", as the original API formats times."""
-    if not iso:
-        return ""
-    try:
-        parsed = datetime.datetime.fromisoformat(iso)
-    except ValueError:
-        return ""
-    return str(parsed.astimezone(datetime.UTC).replace(microsecond=0))
 
 
 def changelog_date(raw: Any) -> str | None:
@@ -253,12 +243,12 @@ def get_setup_instructions(text: str, name: str, readme_vars: ReadmeVars) -> str
     """
     The Application Setup section as Markdown, rendered the way the README renders it (with links to the
     project) rather than with the v1 substitutions, which drop them. A block only this rendering can't
-    parse costs just this field, not the image.
+    handle costs just this field, not the image.
     """
     if not readme_vars.get("app_setup_block_enabled", False):
         return None
     try:
-        readme = parse_readme_vars(text, readme_substitutions(name, _str(readme_vars.get("project_url"))))
+        readme = parse_readme_vars(text, name, _str(readme_vars.get("project_url")))
     except Exception as e:
         log.warning("  ! %s: setup instructions skipped: %s", name, e)
         return None
@@ -296,25 +286,17 @@ def split_categories(category: str) -> list[str]:
 # Images
 
 
-def listed_image(repo: RepoSnapshot) -> tuple[str, str, ReadmeVars] | None:
+def build_image(repo: RepoSnapshot, monthly_pulls: dict[str, int], hub_pulls: dict[str, int]) -> ImageDetail | None:
     """
-    The image name, readme-vars text and parsed readme-vars for a repository, or None when it isn't one
-    we list: not an image repo, no readme-vars.yml, or categorised Internal. Raises on invalid YAML.
+    The image for a repository, or None when it isn't one we list: not an image repo, no readme-vars.yml,
+    or categorised Internal. Raises when readme-vars.yml is not valid YAML.
     """
     if not is_image_repo(repo.name) or not repo.readme_vars:
         return None
     name = repo.name.replace("docker-", "")
-    readme_vars = parse_readme_vars(repo.readme_vars, api_substitutions(name))
+    readme_vars = parse_api_vars(repo.readme_vars, name)
     if not readme_vars or "Internal" in _str(readme_vars.get("project_categories", "")):
         return None
-    return name, repo.readme_vars, readme_vars
-
-
-def build_image(repo: RepoSnapshot, monthly_pulls: dict[str, int], hub_pulls: dict[str, int]) -> ImageDetail | None:
-    listed = listed_image(repo)
-    if not listed:
-        return None
-    name, text, readme_vars = listed
     category = _str(readme_vars.get("project_categories", ""))
     tags, stable = get_tags(readme_vars)
     changelog, initial_date = get_changelog(readme_vars)
@@ -341,7 +323,7 @@ def build_image(repo: RepoSnapshot, monthly_pulls: dict[str, int], hub_pulls: di
         config=config,
         categories=split_categories(category),
         deprecation_message=_optional_str(readme_vars.get("project_deprecation_message")) if deprecated else None,
-        setup_instructions=get_setup_instructions(text, name, readme_vars),
+        setup_instructions=get_setup_instructions(repo.readme_vars, name, readme_vars),
         archived=repo.archived,
         release_url=release.url if release else None,
         docker_hub_pulls=hub_pulls.get(name),
@@ -353,28 +335,18 @@ def build_image(repo: RepoSnapshot, monthly_pulls: dict[str, int], hub_pulls: di
     )
 
 
-def _skipping_broken[T](repos: Iterable[RepoSnapshot], fn: Callable[[RepoSnapshot], T | None]) -> list[T]:
-    """Runs `fn` for each repository. A broken readme-vars.yml skips that image rather than failing them all."""
-    results = []
-    for repo in repos:
-        try:
-            result = fn(repo)
-        except Exception as e:
-            log.warning("  ! skipped %s: %s", repo.name, e)
-            continue
-        if result is not None:
-            results.append(result)
-    return results
-
-
 def build_images(
     repos: list[RepoSnapshot], monthly_pulls: dict[str, int], hub_pulls: dict[str, int]
 ) -> list[ImageDetail]:
     """Every listed image, sorted by repository name like the Python updater."""
-    ordered = sorted(repos, key=lambda repo: repo.name)
-    return _skipping_broken(ordered, lambda repo: build_image(repo, monthly_pulls, hub_pulls))
-
-
-def listed_image_names(repos: list[RepoSnapshot]) -> list[str]:
-    """The names build_images would list, without building the images."""
-    return _skipping_broken(repos, lambda repo: listed[0] if (listed := listed_image(repo)) else None)
+    images = []
+    for repo in sorted(repos, key=lambda repo: repo.name):
+        try:
+            image = build_image(repo, monthly_pulls, hub_pulls)
+        except Exception as e:
+            # One broken readme-vars.yml must not take the whole API down with it.
+            log.warning("  ! skipped %s: %s", repo.name, e)
+            continue
+        if image:
+            images.append(image)
+    return images

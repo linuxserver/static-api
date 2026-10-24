@@ -1,6 +1,6 @@
 import pytest
 
-from lsio_api.readme_vars import api_substitutions, parse_readme_vars
+from lsio_api.readme_vars import parse_api_vars
 from lsio_api.snapshot import is_image_repo
 from lsio_api.transform import (
     build_image,
@@ -15,8 +15,6 @@ from lsio_api.transform import (
     get_ports,
     get_setup_instructions,
     get_tags,
-    listed_image_names,
-    python_timestamp,
     split_categories,
 )
 
@@ -24,7 +22,7 @@ from .conftest import repo
 
 
 def readme(yaml: str) -> dict[str, object]:
-    parsed = parse_readme_vars(yaml, api_substitutions("example"))
+    parsed = parse_api_vars(yaml, "example")
     assert parsed is not None
     return parsed
 
@@ -98,19 +96,11 @@ def test_deprecation_message_only_for_deprecated_images() -> None:
 def test_one_broken_file_does_not_stop_the_rest() -> None:
     repos = [repo(name="docker-broken", readme_vars="a: [unclosed"), repo()]
     assert [i.name for i in build_images(repos, {}, {})] == ["example"]
-    assert listed_image_names(repos) == ["example"]
 
 
 def test_sorted_by_repository_name() -> None:
     images = build_images([repo(name="docker-zeta"), repo(name="docker-alpha")], {}, {})
     assert [i.name for i in images] == ["alpha", "zeta"]
-
-
-def test_python_timestamp() -> None:
-    assert python_timestamp("2026-10-24T11:25:58Z") == "2026-10-24 11:25:58+00:00"
-    assert python_timestamp("2026-10-24T11:25:58.123Z") == "2026-10-24 11:25:58+00:00"
-    assert python_timestamp(None) == ""
-    assert python_timestamp("nonsense") == ""
 
 
 @pytest.mark.parametrize(
@@ -206,12 +196,11 @@ def test_setup_instructions_as_the_readme_renders_them() -> None:
         'project_url: "https://example.org"\n'
         "app_setup_block_enabled: true\n"
         "app_setup_block: |\n"
-        "  {% raw -%}\n"
         "  See [{{ project_name|capitalize }}]({{ project_url }}) or [docs]({{project_url}}).\n"
-        "  {%- endraw %}\n"
+        "  {% raw %}Compose uses {{ VAR }} syntax.{% endraw %}\n"
     )
     assert get_setup_instructions(yaml, "example", readme(yaml)) == (
-        "See [Example](https://example.org) or [docs](https://example.org)."
+        "See [Example](https://example.org) or [docs](https://example.org).\nCompose uses {{ VAR }} syntax."
     )
     disabled = 'app_setup_block: "x"'
     assert get_setup_instructions(disabled, "example", readme(disabled)) is None

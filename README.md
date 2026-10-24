@@ -68,10 +68,11 @@ Docker Hub ───────┘  (committed daily)    (FastAPI app)  └─ 
 | --- | --- |
 | `lsio_api/models.py` | Every response shape. The v1 models are the original's, field for field; field descriptions are the spec's documentation. |
 | `lsio_api/transform.py` | `updater.py`'s `get_*` functions: readme-vars.yml and GitHub data to an image. The parity tests compare its output with real API responses. |
-| `lsio_api/app.py` | The FastAPI app: one route per endpoint. |
+| `lsio_api/fleet.py` | Every image built from the snapshot, with its refresh status: what the app serves. |
+| `lsio_api/app.py` | The FastAPI app: one route per endpoint, plus the spec, the docs page and the 404 page. |
 | `lsio_api/build.py` | Requests every route (its paths come from the app, so nothing is missed) and writes `dist/`. A response that doesn't fit its model fails the build. |
 | `lsio_api/refresh.py`, `sources/` | Fetches each source. One that fails keeps its previous data and the error is recorded in `data/status.json`, as the Python updater did, so the API keeps serving and `/health` reports `Failed`. GitHub's data comes from about seven GraphQL requests rather than several REST calls per repository. |
-| `lsio_api/site.py`, `templates/` | The docs page, rendered from the generated spec with Jinja. Styles in `public/assets/` are the site's Raft tokens in plain CSS. |
+| `lsio_api/site.py`, `templates/` | The docs page, rendered from the generated spec with Jinja (as is the Atom feed). Styles in `public/assets/` are the site's Raft tokens in plain CSS. |
 
 `data/` holds raw source data rather than finished responses, so changing how a field is derived needs no
 refetch, builds are deterministic and work offline, and the daily commit is a readable diff.

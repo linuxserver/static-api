@@ -10,8 +10,8 @@ from fastapi.testclient import TestClient
 from lsio_api.app import create_app
 from lsio_api.build import render
 from lsio_api.config import SiteConfig
+from lsio_api.fleet import Fleet, load_fleet
 from lsio_api.models import SourceStatus
-from lsio_api.responses import Model, to_model
 from lsio_api.snapshot import GithubSnapshot, PullsSnapshot, Release, RepoSnapshot, Snapshot
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -52,8 +52,8 @@ def fixture_snapshot() -> Snapshot:
 
 
 @pytest.fixture
-def model() -> Model:
-    return to_model(fixture_snapshot())
+def fleet() -> Fleet:
+    return load_fleet(fixture_snapshot())
 
 
 @pytest.fixture
@@ -62,14 +62,21 @@ def config() -> SiteConfig:
 
 
 @pytest.fixture
-def files(model: Model, config: SiteConfig) -> dict[str, bytes]:
+def files(fleet: Fleet, config: SiteConfig) -> dict[str, bytes]:
     """Every file of the built site."""
-    return render(model, config)
+    return render(fleet, config)
 
 
 @pytest.fixture
-def client(model: Model, config: SiteConfig) -> Iterator[TestClient]:
-    with TestClient(create_app(model, config)) as c:
+def spec(files: dict[str, bytes]) -> dict[str, Any]:
+    """The published OpenAPI spec."""
+    parsed: dict[str, Any] = json.loads(files["openapi.json"])
+    return parsed
+
+
+@pytest.fixture
+def client(fleet: Fleet, config: SiteConfig) -> Iterator[TestClient]:
+    with TestClient(create_app(fleet, config)) as c:
         yield c
 
 

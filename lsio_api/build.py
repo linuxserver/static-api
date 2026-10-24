@@ -1,26 +1,24 @@
 """
-Builds dist/ from data/: every route of the FastAPI app requested through its test client and written
-to a file, the generated OpenAPI spec, and the docs pages. Pydantic validates every response on the way,
-so data that doesn't fit the models is never published.
+Builds dist/ from data/ by requesting every route of the FastAPI app through its test client and writing
+each response to a file: the API, the generated OpenAPI spec and the docs pages. Pydantic validates every
+response on the way, so data that doesn't fit the models is never published.
 
 Usage: [SITE_URL=https://api.linuxserver.io] [BASE_PATH=/] python -m lsio_api.build
 """
 
-import json
+import itertools
 import logging
 import shutil
 import sys
 from pathlib import Path
 
-import yaml
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
 from fastapi.testclient import TestClient
 
 from .app import create_app
 from .config import DATA_DIR, DIST_DIR, PUBLIC_DIR, SiteConfig
-from .responses import Model, to_model
-from .site import render_not_found
+from .fleet import Fleet, load_fleet
 from .snapshot import load_snapshot
 
 log = logging.getLogger(__name__)
@@ -28,32 +26,33 @@ log = logging.getLogger(__name__)
 Files = dict[str, bytes]
 
 
-def endpoint_paths(app: FastAPI, model: Model) -> list[str]:
-    """Every path the spec documents, with {name} expanded to each image."""
+def route_paths(app: FastAPI, fleet: Fleet) -> list[str]:
+    """Every route's path, with each path parameter expanded to all its values."""
+    values = {"name": [image.name for image in fleet.images]}
     paths = []
     for route in app.routes:
-        if not (isinstance(route, APIRoute) and route.include_in_schema):
+        if not isinstance(route, APIRoute):
             continue
-        if "{name}" in route.path:
-            paths += [route.path.replace("{name}", image.name) for image in model.images]
-        else:
-            paths.append(route.path)
+        params = list(route.param_convertors)
+        if unknown := set(params) - values.keys():
+            raise ValueError(f"{route.path}: no values to build {', '.join(sorted(unknown))} with")
+        for combination in itertools.product(*(values[p] for p in params)):
+            paths.append(route.path_format.format(**dict(zip(params, combination, strict=True))))
     return paths
 
 
-def render(model: Model, config: SiteConfig) -> Files:
+def render(fleet: Fleet, config: SiteConfig) -> Files:
     """Every generated file of the site, by path relative to the site root. Raises if any route fails."""
-    app = create_app(model, config)
+    app = create_app(fleet, config)
     files: Files = {}
-    with TestClient(app, raise_server_exceptions=True) as client:
-        for path in [*endpoint_paths(app, model), "/"]:
+    with TestClient(app) as client:
+        for path in route_paths(app, fleet):
             res = client.get(path)
             res.raise_for_status()
             files[path.lstrip("/") or "index.html"] = res.content
-    spec = app.openapi()
-    files["openapi.json"] = (json.dumps(spec, indent=2, ensure_ascii=False) + "\n").encode()
-    files["openapi.yaml"] = yaml.safe_dump(spec, sort_keys=False, allow_unicode=True, width=1000).encode()
-    files["404.html"] = render_not_found(model, config).encode()
+        missing = client.get("/404.html")  # any path that doesn't exist gets the 404 page
+        assert missing.status_code == 404, missing.status_code
+        files["404.html"] = missing.content
     return files
 
 
@@ -70,13 +69,13 @@ def main() -> int:
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     logging.getLogger("httpx2").setLevel(logging.WARNING)  # one line per built file is noise
     config = SiteConfig.from_env()
-    model = to_model(load_snapshot(DATA_DIR))
-    if not model.images:
+    fleet = load_fleet(load_snapshot(DATA_DIR))
+    if not fleet.images:
         log.error("No images in data/. Run `python -m lsio_api.refresh` first.")
         return 1
-    files = render(model, config)
+    files = render(fleet, config)
     write_site(DIST_DIR, files)
-    log.info("Built %d files for %d images into dist/ (%s)", len(files), len(model.images), config.site_root)
+    log.info("Built %d files for %d images into dist/ (%s)", len(files), len(fleet.images), config.site_root)
     return 0
 
 

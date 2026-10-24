@@ -29,16 +29,16 @@
     <aside aria-label="Data status" class="strip">
       <div class="container strip-inner">
         <p class="strip-status">
-          <span class="pulse{{ '' if model.health == 'Success' else ' pulse-bad' }}" aria-hidden="true"></span>
-          <span><a href="{{ base }}api/v1/status.json">{{ 'Data is current' if model.health == 'Success' else 'Last refresh failed' }}</a> ·
+          <span class="pulse{{ '' if healthy else ' pulse-bad' }}" aria-hidden="true"></span>
+          <span><a href="{{ base }}api/v1/status.json">{{ 'Data is current' if healthy else 'Last refresh failed' }}</a> ·
             <span class="fg">{{ stats.images }}</span> images</span>
         </p>
-        <p class="strip-date">refreshed <time datetime="{{ model.updated_at }}">{{ model.updated_at | timestamp }}</time></p>
+        <p class="strip-date">refreshed <time datetime="{{ fleet.updated_at }}">{{ fleet.updated_at | timestamp }}</time></p>
       </div>
     </aside>
     <header class="site-header">
       <div class="container header-inner">
-        <a href="{{ base }}" class="brand" aria-label="LinuxServer.io API home">{{ logo('brand-logo', 'logo-header') }}<span class="brand-tag">API</span></a>
+        <a href="{{ base }}" class="brand" aria-label="LinuxServer.io API home">{% with class_name='brand-logo', id_prefix='logo-header' %}{% include 'wordmark.svg' %}{% endwith %}<span class="brand-tag">API</span></a>
         <nav aria-label="Main" class="main-nav">
           <ul>
             <li><a href="{{ base }}#endpoints">Endpoints</a></li>
@@ -63,7 +63,7 @@
     <footer class="site-footer">
       <div class="container footer-inner">
         <div>
-          {{ logo('footer-logo', 'logo-footer') }}
+          {% with class_name='footer-logo', id_prefix='logo-footer' %}{% include 'wordmark.svg' %}{% endwith %}
           <p class="muted">Volunteers building and maintaining the largest collection of community Docker images. Free and open source, always.</p>
         </div>
         <ul class="footer-links">

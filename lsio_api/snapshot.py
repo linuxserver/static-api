@@ -13,7 +13,6 @@ from pydantic import BaseModel
 from .models import SourceStatus
 
 SourceName = Literal["github", "scarf", "dockerhub"]
-SOURCES: tuple[SourceName, ...] = ("github", "scarf", "dockerhub")
 
 
 def is_image_repo(repo_name: str) -> bool:
@@ -40,19 +39,15 @@ class RepoSnapshot(BaseModel):
 
 
 class GithubSnapshot(BaseModel):
-    fetched_at: str = ""
+    fetched_at: str | None = None
     repos: list[RepoSnapshot] = []
 
 
 class PullsSnapshot(BaseModel):
     """Monthly (Scarf) or lifetime (Docker Hub) pull counts keyed by image name."""
 
-    fetched_at: str = ""
+    fetched_at: str | None = None
     pulls: dict[str, int] = {}
-
-
-def never_tried() -> SourceStatus:
-    return SourceStatus(ok=False, checked_at="")
 
 
 class Snapshot(BaseModel):
@@ -60,10 +55,7 @@ class Snapshot(BaseModel):
     scarf: PullsSnapshot = PullsSnapshot()
     dockerhub: PullsSnapshot = PullsSnapshot()
     status: dict[SourceName, SourceStatus] = {}
-    """Outcome of the most recent refresh of each source."""
-
-    def source_status(self, source: SourceName) -> SourceStatus:
-        return self.status.get(source) or never_tried()
+    """Outcome of the most recent refresh of each source; a source never tried has no entry."""
 
 
 def _read(path: Path) -> object:
@@ -72,18 +64,14 @@ def _read(path: Path) -> object:
 
 def load_snapshot(directory: Path) -> Snapshot:
     """Reads data/. Missing files are treated as empty so a fresh checkout can refresh straight away."""
-    parts = {key: _read(directory / f"{key}.json") for key in ("github", "scarf", "dockerhub", "status")}
-    return Snapshot.model_validate(parts)
+    return Snapshot.model_validate({key: _read(directory / f"{key}.json") for key in Snapshot.model_fields})
 
 
 def save_snapshot(directory: Path, snapshot: Snapshot) -> None:
     """One JSON file per source, indented, so the daily data commit is a readable diff."""
     directory.mkdir(parents=True, exist_ok=True)
-    parts = {
-        "github": snapshot.github.model_dump(),
-        "scarf": snapshot.scarf.model_dump(),
-        "dockerhub": snapshot.dockerhub.model_dump(),
-        "status": {name: s.model_dump(exclude_none=True) for name, s in snapshot.status.items()},
-    }
-    for key, value in parts.items():
+    # Repositories keep their nulls (the fields are required); statuses leave unset fields out.
+    for key, value in snapshot.model_dump().items():
+        if key == "status":
+            value = {name: s.model_dump(exclude_none=True) for name, s in snapshot.status.items()}
         (directory / f"{key}.json").write_text(json.dumps(value, indent=1, ensure_ascii=False) + "\n")

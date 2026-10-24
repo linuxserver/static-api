@@ -1,9 +1,12 @@
 """The recent changelog as an Atom feed, so people can follow notable image changes in a feed reader."""
 
 import hashlib
-from xml.sax.saxutils import escape, quoteattr
 
-from .models import ChangelogEntry, ImageDetail
+from .config import SiteConfig
+from .fleet import Fleet
+from .models import ChangelogEntry
+from .responses import recent_changelog
+from .templating import env
 
 
 def _entry_id(e: ChangelogEntry) -> str:
@@ -11,34 +14,19 @@ def _entry_id(e: ChangelogEntry) -> str:
     return "urn:sha1:" + hashlib.sha1(f"{e.image}\n{e.date}\n{e.desc}".encode()).hexdigest()
 
 
-def changelog_feed(
-    entries: list[ChangelogEntry], images: list[ImageDetail], *, self_url: str, site_url: str, updated: str
-) -> str:
-    github_urls = {i.name: i.github_url for i in images}
-    items = [
-        f"""  <entry>
-    <id>{_entry_id(e)}</id>
-    <title>{escape(f"{e.image}: {e.desc}")}</title>
-    <updated>{e.date}T00:00:00Z</updated>
-    <link rel="alternate" href={quoteattr(github_urls.get(e.image, "https://github.com/linuxserver") + "#versions")}/>
-    <category term={quoteattr(e.image)}/>
-    <content type="text">{escape(e.desc)}</content>
-  </entry>"""
-        for e in entries
+def changelog_feed(fleet: Fleet, config: SiteConfig) -> str:
+    github_urls = {i.name: i.github_url for i in fleet.images}
+    entries = [
+        {
+            "id": _entry_id(e),
+            "entry": e,
+            "link": github_urls.get(e.image, "https://github.com/linuxserver") + "#versions",
+        }
+        for e in recent_changelog(fleet)
     ]
-    return "\n".join(
-        [
-            '<?xml version="1.0" encoding="utf-8"?>',
-            '<feed xmlns="http://www.w3.org/2005/Atom">',
-            "  <title>LinuxServer.io image changelog</title>",
-            "  <subtitle>Notable changes to LinuxServer.io container images.</subtitle>",
-            f"  <id>{escape(self_url)}</id>",
-            f'  <link rel="self" href={quoteattr(self_url)}/>',
-            f'  <link rel="alternate" href={quoteattr(site_url)}/>',
-            f"  <updated>{updated}</updated>",
-            "  <author><name>LinuxServer.io</name></author>",
-            *items,
-            "</feed>",
-            "",
-        ]
+    return env.get_template("feed.xml").render(
+        self_url=f"{config.api_root}/api/v1/changelog.xml",
+        site_url=config.site_root,
+        updated=fleet.updated_at,
+        entries=entries,
     )

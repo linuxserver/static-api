@@ -20,7 +20,7 @@ from .snapshot import GithubSnapshot, PullsSnapshot, Snapshot, SourceName, load_
 from .sources.github import fetch_repos
 from .sources.http import client
 from .sources.pulls import fetch_docker_hub_pulls, fetch_scarf_pulls
-from .transform import listed_image_names
+from .transform import build_images
 
 log = logging.getLogger(__name__)
 
@@ -46,16 +46,15 @@ def refresh(
         """Runs one source; on failure the previous data stays and the error is recorded."""
         checked_at = now()
         try:
-            warning = run()
+            ok, message = True, run()
         except Exception as e:
-            fetched_at = getattr(snapshot, source).fetched_at or None
-            snapshot.status[source] = SourceStatus(ok=False, checked_at=checked_at, fetched_at=fetched_at, error=str(e))
-            log.info("  ✗ %s: %s (keeping data from %s)", source, e, fetched_at or "never")
-            return
-        snapshot.status[source] = SourceStatus(
-            ok=True, checked_at=checked_at, fetched_at=getattr(snapshot, source).fetched_at or None, error=warning
-        )
-        log.info("  ✓ %s%s", source, f" ({warning})" if warning else "")
+            ok, message = False, str(e)
+        fetched_at = getattr(snapshot, source).fetched_at or None
+        snapshot.status[source] = SourceStatus(ok=ok, checked_at=checked_at, fetched_at=fetched_at, error=message)
+        if ok:
+            log.info("  ✓ %s%s", source, f" ({message})" if message else "")
+        else:
+            log.info("  ✗ %s: %s (keeping data from %s)", source, message, fetched_at or "never")
 
     def github() -> None:
         if not github_token:
@@ -66,7 +65,7 @@ def refresh(
         snapshot.github = GithubSnapshot(fetched_at=now(), repos=repos)
 
     def dockerhub() -> str | None:
-        names = listed_image_names(snapshot.github.repos)
+        names = [image.name for image in build_images(snapshot.github.repos, {}, {})]
         pulls, failed = fetch_docker_hub_pulls(http, names, snapshot.dockerhub.pulls)
         if names and len(failed) == len(names):
             raise RuntimeError("every request failed")

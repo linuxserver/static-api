@@ -42,9 +42,9 @@
     {% endif %}
     <h4>Response <span class="media">{{ op.media_type }}</span></h4>
     {% if op.fields %}
-    <details class="schema"><summary>{{ op.schema_name or 'Schema' }}</summary>{{ field_list(op.fields) }}</details>
+    <details class="schema"><summary>{{ op.response }}</summary>{{ field_list(op.fields) }}</details>
     {% else %}
-    <p class="muted">{{ op.response_text }}{% if op.media_type != 'application/json' %} document{% endif %}.</p>
+    <p class="muted">{{ op.response }}.</p>
     {% endif %}
     <div class="try" data-path="{{ op.path }}">
       {% if op.name_param %}

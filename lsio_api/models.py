@@ -4,9 +4,19 @@ field for field and in the same order, because names and key order are part of w
 The OpenAPI spec is generated from these, so descriptions here are the API's documentation.
 """
 
-from typing import Literal
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field
+
+V1_CHANGELOG_ENTRIES = 3
+"""How many changelog entries the v1 list endpoints include, as the original does."""
+CHANGELOG_LIMIT = 100
+"""How many entries /api/v1/changelog.json lists."""
+
+IsoDate = Annotated[str, Field(description="YYYY-MM-DD")]
+LastUpdated = Annotated[
+    str, Field(description="When the data was last refreshed, UTC, as `YYYY-MM-DD HH:MM:SS+00:00`.")
+]
 
 # ---------------------------------------------------------------------------------------------------
 # v1, as the original API serves them
@@ -23,7 +33,7 @@ class Architecture(BaseModel):
 
 
 class Changelog(BaseModel):
-    date: str = Field(description="YYYY-MM-DD")
+    date: IsoDate
     desc: str
 
 
@@ -129,7 +139,8 @@ class Image(BaseModel):
     tags: list[Tag]
     architectures: list[Architecture]
     changelog: list[Changelog] | None = Field(
-        None, description="The most recent entries; three in list responses, all in `ImageDetail`."
+        None,
+        description=f"The most recent entries; {V1_CHANGELOG_ENTRIES} in list responses, all in `ImageDetail`.",
     )
     config: Config | None = None
 
@@ -144,7 +155,7 @@ class ImagesData(BaseModel):
 
 class ImagesResponse(BaseModel):
     status: str
-    last_updated: str = Field(description="When the data was last refreshed, UTC, as `YYYY-MM-DD HH:MM:SS+00:00`.")
+    last_updated: LastUpdated
     data: ImagesData
 
 
@@ -211,7 +222,7 @@ class Stats(BaseModel):
 
 class ChangelogEntry(BaseModel):
     image: str
-    date: str = Field(description="YYYY-MM-DD")
+    date: IsoDate
     desc: str
 
 
@@ -236,7 +247,7 @@ class Status(BaseModel):
 
 class Envelope(BaseModel):
     status: Literal["OK"] = "OK"
-    last_updated: str = Field(description="When the data was last refreshed, UTC, as `YYYY-MM-DD HH:MM:SS+00:00`.")
+    last_updated: LastUpdated
 
 
 class ImageData(BaseModel):
@@ -272,7 +283,7 @@ class StatsResponse(Envelope):
 
 
 class ChangelogData(BaseModel):
-    changelog: list[ChangelogEntry] = Field(max_length=100)
+    changelog: list[ChangelogEntry] = Field(max_length=CHANGELOG_LIMIT)
 
 
 class ChangelogResponse(Envelope):

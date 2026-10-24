@@ -1,7 +1,7 @@
 import yaml
 
+from lsio_api.fleet import Fleet
 from lsio_api.models import Cap, Config, Custom, Device, EnvVar, Hostname, Port, Volume
-from lsio_api.responses import Model
 from lsio_api.snippets import docker_compose, docker_run
 
 CONFIG = Config(
@@ -51,8 +51,8 @@ def test_compose_drops_ports_with_host_networking() -> None:
     assert "ports:" not in compose
 
 
-def test_compose_is_valid_yaml_for_every_fixture_image(model: Model) -> None:
-    for image in model.images:
+def test_compose_is_valid_yaml_for_every_fixture_image(fleet: Fleet) -> None:
+    for image in fleet.images:
         doc = yaml.safe_load(image.snippets.docker_compose)
         assert doc["services"][image.name]["image"] == f"lscr.io/linuxserver/{image.name}:latest"
 

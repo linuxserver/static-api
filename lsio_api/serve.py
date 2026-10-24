@@ -9,8 +9,8 @@ import uvicorn
 
 from .app import create_app
 from .config import DATA_DIR, SiteConfig
-from .responses import to_model
+from .fleet import load_fleet
 from .snapshot import load_snapshot
 
 if __name__ == "__main__":
-    uvicorn.run(create_app(to_model(load_snapshot(DATA_DIR)), SiteConfig()), port=8000)
+    uvicorn.run(create_app(load_fleet(load_snapshot(DATA_DIR)), SiteConfig()), port=8000)

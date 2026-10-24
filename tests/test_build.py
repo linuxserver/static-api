@@ -1,39 +1,51 @@
 """The built site: every documented path is built, the spec is valid, and the files land where they should."""
 
-import json
 from pathlib import Path
+from typing import Any
 
+import pytest
 import yaml
 from fastapi.testclient import TestClient
 from openapi_spec_validator import validate
 
 from lsio_api.app import create_app
-from lsio_api.build import endpoint_paths, render, write_site
+from lsio_api.build import render, route_paths, write_site
 from lsio_api.config import SiteConfig
+from lsio_api.fleet import Fleet, load_fleet
 from lsio_api.models import SourceStatus
-from lsio_api.responses import Model, to_model
 from lsio_api.snapshot import Snapshot, load_snapshot, save_snapshot
 
 from .conftest import fixture_snapshot
 
 
-def test_builds_every_documented_path(model: Model, config: SiteConfig, files: dict[str, bytes]) -> None:
-    app = create_app(model, config)
-    spec_paths = set(app.openapi()["paths"])
-    built = {p for p in spec_paths if any(Path("/" + f).match(p.replace("{name}", "*")) for f in files)}
-    assert built == spec_paths
-    assert len(endpoint_paths(app, model)) == len(spec_paths) - 2 + 2 * len(model.images)
+def test_builds_every_documented_path(fleet: Fleet, spec: dict[str, Any], files: dict[str, bytes]) -> None:
+    for path in spec["paths"]:
+        if "{name}" not in path:
+            assert path.lstrip("/") in files, path
+    for image in fleet.images:
+        assert f"api/v1/catalog/{image.name}.json" in files
+        assert f"api/v1/catalog/{image.name}/docker-compose.yml" in files
+    assert {"index.html", "404.html", "openapi.json", "openapi.yaml"} <= files.keys()
 
 
-def test_spec_is_valid_openapi(files: dict[str, bytes]) -> None:
-    spec = json.loads(files["openapi.json"])
+def test_route_paths_need_values_for_every_parameter(fleet: Fleet, config: SiteConfig) -> None:
+    app = create_app(fleet, config)
+
+    @app.get("/api/v1/categories/{category}.json")
+    def category(category: str) -> str:
+        return category
+
+    with pytest.raises(ValueError, match="no values to build category"):
+        route_paths(app, fleet)
+
+
+def test_spec_is_valid_openapi(spec: dict[str, Any], files: dict[str, bytes]) -> None:
     validate(spec)
     assert spec["servers"] == [{"url": "https://example.github.io/static-api"}]
     assert yaml.safe_load(files["openapi.yaml"]) == spec
 
 
-def test_operation_ids_are_unique_and_tagged(files: dict[str, bytes]) -> None:
-    spec = json.loads(files["openapi.json"])
+def test_operation_ids_are_unique_and_tagged(spec: dict[str, Any]) -> None:
     ops = [item["get"] for item in spec["paths"].values()]
     ids = [op["operationId"] for op in ops]
     assert len(set(ids)) == len(ids)
@@ -53,8 +65,11 @@ def test_compose_and_feed(files: dict[str, bytes]) -> None:
     assert feed.startswith('<?xml version="1.0" encoding="utf-8"?>') and feed.endswith("</feed>\n")
 
 
-def test_unknown_image_is_404(client: TestClient) -> None:
-    assert client.get("/api/v1/catalog/nope.json").status_code == 404
+def test_unknown_paths_get_the_404_page(client: TestClient, files: dict[str, bytes]) -> None:
+    for path in ("/api/v1/catalog/nope.json", "/nope"):
+        res = client.get(path)
+        assert res.status_code == 404
+        assert res.content == files["404.html"]
 
 
 def test_writes_files_and_public_assets(tmp_path: Path, files: dict[str, bytes]) -> None:
@@ -68,15 +83,15 @@ def test_writes_files_and_public_assets(tmp_path: Path, files: dict[str, bytes])
 def test_never_tried_sources_are_left_out_of_status() -> None:
     snapshot = fixture_snapshot()
     snapshot.status = {"github": snapshot.status["github"]}
-    model = to_model(snapshot)
-    assert set(model.sources) == {"github"}
-    render(model, SiteConfig())  # and the build still validates
+    fleet = load_fleet(snapshot)
+    assert set(fleet.sources) == {"github"}
+    render(fleet, SiteConfig())  # and the build still validates
 
 
 def test_failed_github_refresh_reports_failed() -> None:
     snapshot = fixture_snapshot()
     snapshot.status["github"] = SourceStatus(ok=False, checked_at="2026-10-25T04:00:00Z", error="down")
-    assert render(to_model(snapshot), SiteConfig())["health"] == b'"Failed"'
+    assert render(load_fleet(snapshot), SiteConfig())["health"] == b'"Failed"'
 
 
 def test_snapshot_round_trips_byte_for_byte(tmp_path: Path) -> None:

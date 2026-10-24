@@ -1,13 +1,15 @@
 from lsio_api import responses
+from lsio_api.config import SiteConfig
 from lsio_api.feed import changelog_feed
-from lsio_api.models import ChangelogEntry, SourceStatus
-from lsio_api.responses import Model, images_response, to_v1_image
+from lsio_api.fleet import Fleet
+from lsio_api.models import CHANGELOG_LIMIT, SourceStatus
+from lsio_api.responses import images_response, to_v1_image
 from lsio_api.transform import build_images
 
 from .conftest import repo
 
 
-def small_model() -> Model:
+def small_fleet() -> Fleet:
     """Three images with known dates, categories and architectures; one deprecated."""
 
     def readme(category: str, changelog: list[str], extra: str = "") -> str:
@@ -26,30 +28,30 @@ def small_model() -> Model:
         repo(name="docker-gone", readme_vars=readme("Media", ["20.10.26"], "project_deprecation_status: true\n")),
     ]
     images = build_images(repos, {"alpha": 10, "beta": 5, "gone": 100}, {"alpha": 1000})
-    return Model(images=images, updated_at="2026-10-24T12:00:00.000Z", health="Success", sources={})
+    return Fleet(images=images, updated_at="2026-10-24T12:00:00.000Z", health="Success", sources={})
 
 
-def test_images_wrapped_like_the_original(model: Model) -> None:
-    res = images_response(model)
+def test_images_wrapped_like_the_original(fleet: Fleet) -> None:
+    res = images_response(fleet)
     assert res.status == "OK"
     assert res.last_updated == "2026-10-24 13:11:46+00:00"
 
 
-def test_images_default_leaves_out_deprecated_and_config(model: Model) -> None:
-    images = images_response(model).data.repositories.linuxserver
+def test_images_default_leaves_out_deprecated_and_config(fleet: Fleet) -> None:
+    images = images_response(fleet).data.repositories.linuxserver
     assert all(not i.deprecated and i.config is None for i in images)
     names = [i.name for i in images]
     assert "sonarr" in names and "readarr" not in names
 
 
-def test_images_honour_both_switches(model: Model) -> None:
-    images = images_response(model, include_config=True, include_deprecated=True).data.repositories.linuxserver
-    assert len(images) == len(model.images)
+def test_images_honour_both_switches(fleet: Fleet) -> None:
+    images = images_response(fleet, include_config=True, include_deprecated=True).data.repositories.linuxserver
+    assert len(images) == len(fleet.images)
     assert all(i.config is not None for i in images)
 
 
-def test_v1_image_has_only_original_fields_and_three_changelog_entries(model: Model) -> None:
-    detail = next(i for i in model.images if i.name == "sonarr")
+def test_v1_image_has_only_original_fields_and_three_changelog_entries(fleet: Fleet) -> None:
+    detail = next(i for i in fleet.images if i.name == "sonarr")
     v1 = to_v1_image(detail, include_config=False).model_dump(exclude_none=True)
     assert len(detail.changelog or []) > 3
     assert len(v1["changelog"]) == 3
@@ -58,7 +60,7 @@ def test_v1_image_has_only_original_fields_and_three_changelog_entries(model: Mo
 
 
 def test_categories_most_populated_first() -> None:
-    assert [c.model_dump() for c in responses.categories(small_model())] == [
+    assert [c.model_dump() for c in responses.categories(small_fleet())] == [
         {"name": "Tools", "slug": "tools", "count": 2, "images": ["alpha", "beta"]},
         {"name": "Media", "slug": "media", "count": 1, "images": ["alpha"]},
     ]
@@ -70,7 +72,7 @@ def test_slugify() -> None:
 
 
 def test_stats_sum_current_images_only() -> None:
-    assert responses.stats(small_model()).model_dump() == {
+    assert responses.stats(small_fleet()).model_dump() == {
         "images": 2,
         "deprecated": 1,
         "monthly_pulls": 15,
@@ -87,7 +89,7 @@ def test_stats_sum_current_images_only() -> None:
 
 
 def test_changelog_newest_first_ties_by_name() -> None:
-    assert [e.model_dump() for e in responses.recent_changelog(small_model())] == [
+    assert [e.model_dump() for e in responses.recent_changelog(small_fleet())] == [
         {"image": "alpha", "date": "2026-10-10", "desc": "Change on 10.10.26"},
         {"image": "beta", "date": "2026-10-10", "desc": "Change on 10.10.26"},
         {"image": "beta", "date": "2021-02-02", "desc": "Change on 02.02.21"},
@@ -95,22 +97,23 @@ def test_changelog_newest_first_ties_by_name() -> None:
     ]
 
 
-def test_changelog_limited(model: Model) -> None:
-    assert len(responses.recent_changelog(model)) <= responses.CHANGELOG_LIMIT
+def test_changelog_limited(fleet: Fleet) -> None:
+    assert len(responses.recent_changelog(fleet)) <= CHANGELOG_LIMIT
 
 
 def test_feed_escapes_text_and_has_stable_ids() -> None:
-    entries = [ChangelogEntry(image="a&b", date="2026-10-10", desc='Use <new> "flag"')]
-    options = {"self_url": "https://x/feed.xml", "site_url": "https://x/", "updated": "2026-10-24T12:00:00.000Z"}
-    feed = changelog_feed(entries, [], **options)
-    assert '<title>a&amp;b: Use &lt;new&gt; "flag"</title>' in feed
+    readme = 'changelogs:\n  - {date: "10.10.26:", desc: "Use <new> \'flag\' & more"}\n'
+    fleet = Fleet(build_images([repo(readme_vars=readme)], {}, {}), "2026-10-24T12:00:00.000Z", "Success", {})
+    feed = changelog_feed(fleet, SiteConfig(site_url="https://x"))
+    assert "<title>example: Use &lt;new&gt; &#39;flag&#39; &amp; more</title>" in feed
     assert "<updated>2026-10-10T00:00:00Z</updated>" in feed
-    assert feed == changelog_feed(entries, [], **options)
+    assert '<link rel="self" href="https://x/api/v1/changelog.xml"/>' in feed
+    assert feed == changelog_feed(fleet, SiteConfig(site_url="https://x"))
 
 
 def test_status_reports_health_and_sources() -> None:
     sources = {"github": SourceStatus(ok=False, checked_at="x")}
-    status = responses.status(Model(small_model().images, "2026-10-24T12:00:00Z", "Failed", sources))
+    status = responses.status(Fleet(small_fleet().images, "2026-10-24T12:00:00Z", "Failed", sources))
     assert status.model_dump(exclude_none=True) == {
         "health": "Failed",
         "images": 2,
