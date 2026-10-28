@@ -1,17 +1,18 @@
 {
  "github": {
-  "ok": true,
-  "checked_at": "2026-10-27T09:52:03.067Z",
-  "fetched_at": "2026-10-27T09:52:44.737Z"
+  "ok": false,
+  "checked_at": "2026-10-28T10:38:34.240Z",
+  "fetched_at": "2026-10-27T09:52:44.737Z",
+  "error": "Unterminated string starting at: line 1 column 215425 (char 215424)"
  },
  "scarf": {
   "ok": false,
-  "checked_at": "2026-10-27T09:52:03.068Z",
+  "checked_at": "2026-10-28T10:38:34.241Z",
   "error": "SCARF_TOKEN is not set"
  },
  "dockerhub": {
   "ok": true,
-  "checked_at": "2026-10-27T09:52:44.737Z",
-  "fetched_at": "2026-10-27T09:53:51.391Z"
+  "checked_at": "2026-10-28T10:39:06.221Z",
+  "fetched_at": "2026-10-28T10:41:11.159Z"
  }
 }
