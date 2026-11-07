@@ -1,17 +1,17 @@
 {
  "github": {
   "ok": true,
-  "checked_at": "2026-11-06T12:11:11.259Z",
-  "fetched_at": "2026-11-06T12:11:48.272Z"
+  "checked_at": "2026-11-07T11:07:58.598Z",
+  "fetched_at": "2026-11-07T11:08:35.686Z"
  },
  "scarf": {
   "ok": false,
-  "checked_at": "2026-11-06T12:11:11.260Z",
+  "checked_at": "2026-11-07T11:07:58.598Z",
   "error": "SCARF_TOKEN is not set"
  },
  "dockerhub": {
   "ok": true,
-  "checked_at": "2026-11-06T12:11:48.272Z",
-  "fetched_at": "2026-11-06T12:12:55.105Z"
+  "checked_at": "2026-11-07T11:08:35.686Z",
+  "fetched_at": "2026-11-07T11:09:40.494Z"
  }
 }
